@@ -53,6 +53,80 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 // clang-format on
 
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+
+// 物理 K キーの位置。keyball39.h の LAYOUT_no_ball で K = R12。
+// 右手側はマトリクス row 4?7。R1x が row 5、R12 は col 2。
+#define KEYBALL_K_KEYPOS_ROW 5
+#define KEYBALL_K_KEYPOS_COL 2
+
+static bool is_keyball_k_key(keyrecord_t *record) {
+  return record->event.key.row == KEYBALL_K_KEYPOS_ROW &&
+         record->event.key.col == KEYBALL_K_KEYPOS_COL;
+}
+
+static bool is_auto_mouse_allowed_key(uint16_t keycode) {
+  if (keycode >= QK_MODS && keycode <= QK_MODS_MAX) {
+    keycode &= 0xff;
+  }
+
+  switch (keycode) {
+    case KC_NO:
+    case KC_TRANSPARENT:
+    case KC_LEFT_CTRL ... KC_RIGHT_GUI:
+    case KC_MS_BTN1 ... KC_MS_BTN8:
+    case SCRL_MO:
+    case AML_TO:
+    case AML_I50:
+    case AML_D50:
+      return true;
+  }
+
+  uint8_t target_layer = get_auto_mouse_layer();
+
+  switch (keycode) {
+    case QK_TO ... QK_TO_MAX:
+      return QK_TO_GET_LAYER(keycode) == target_layer;
+    case QK_TOGGLE_LAYER ... QK_TOGGLE_LAYER_MAX:
+      return QK_TOGGLE_LAYER_GET_LAYER(keycode) == target_layer;
+    case QK_MOMENTARY ... QK_MOMENTARY_MAX:
+      return QK_MOMENTARY_GET_LAYER(keycode) == target_layer;
+    case QK_LAYER_MOD ... QK_LAYER_MOD_MAX:
+      return QK_LAYER_MOD_GET_LAYER(keycode) == target_layer;
+#    ifndef NO_ACTION_TAPPING
+    case QK_LAYER_TAP_TOGGLE ... QK_LAYER_TAP_TOGGLE_MAX:
+      return QK_LAYER_TAP_TOGGLE_GET_LAYER(keycode) == target_layer;
+    case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
+      return QK_LAYER_TAP_GET_LAYER(keycode) == target_layer;
+#    endif
+  }
+
+  return false;
+}
+
+// AML 有効中、物理 K キーをマウスキー扱いとし AML を解除させない。
+bool is_mouse_record_user(uint16_t keycode, keyrecord_t *record) {
+  return is_keyball_k_key(record) && layer_state_is(get_auto_mouse_layer());
+}
+
+void keyboard_post_init_user(void) {
+  set_auto_mouse_enable(true);
+  set_auto_mouse_timeout(AUTO_MOUSE_TIME);
+  // スクロールを上下左右フリー方向にする（既定の縦固定を解除）
+  keyball_set_scrollsnap_mode(KEYBALL_SCROLLSNAP_MODE_FREE);
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  if (record->event.pressed && layer_state_is(get_auto_mouse_layer()) &&
+      !is_keyball_k_key(record) && !is_auto_mouse_allowed_key(keycode)) {
+    auto_mouse_reset_trigger(true);
+  }
+
+  return true;
+}
+
+#endif
+
 layer_state_t layer_state_set_user(layer_state_t state) {
     // Auto enable scroll mode when the highest layer is 3
     keyball_set_scroll_mode(get_highest_layer(state) == 3);
