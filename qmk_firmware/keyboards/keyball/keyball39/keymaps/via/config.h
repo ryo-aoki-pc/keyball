@@ -35,6 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define SPLIT_USB_TIMEOUT 2500
 
+// Reboot and retry master/slave detection when this half decided it is a
+// slave but never receives communication from a master. This recovers the
+// keyboard when USB enumeration loses the race against SPLIT_USB_TIMEOUT
+// (e.g. behind a Keyboard Quantizer on cold boot or replug).
+#define SPLIT_WATCHDOG_ENABLE
+
 #define TAP_CODE_DELAY 5
 
 #define POINTING_DEVICE_AUTO_MOUSE_ENABLE
