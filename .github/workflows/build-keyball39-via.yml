@@ -22,9 +22,9 @@ on:
       - 'qmk_firmware/keyboards/keyball/drivers/**'
       - '.github/**.yml'
     tags-ignore:
-      - '*'
+      - '**'
     branches:
-      - '*'
+      - '**'
 
 jobs:
 
