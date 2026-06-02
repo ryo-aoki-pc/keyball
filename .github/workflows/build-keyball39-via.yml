@@ -1,0 +1,57 @@
+# keyball39 の VIA対応ファームウェアをビルドする workflow
+#
+# 実行方法:
+#   - 自動: keyball39 関連のコード (keyball39/, lib/, drivers/) を push したとき
+#   - 手動: Actions タブ → "Build Keyball39 VIA firmware" → "Run workflow"
+#     (手動実行はこのファイルがデフォルトブランチにある場合のみ表示されます)
+#
+# ビルド結果: workflow 実行ページ下部の Artifacts から
+#             keyball39-via-firmware (zip) をダウンロードして .hex を書き込む
+
+name: Build Keyball39 VIA firmware
+
+run-name: Build keyball39:via (${{ github.ref_name }})
+
+on:
+  workflow_dispatch: {}
+
+  push:
+    paths:
+      - 'qmk_firmware/keyboards/keyball/keyball39/**'
+      - 'qmk_firmware/keyboards/keyball/lib/**'
+      - 'qmk_firmware/keyboards/keyball/drivers/**'
+      - '.github/**.yml'
+    tags-ignore:
+      - '**'
+    branches:
+      - '**'
+
+jobs:
+
+  build:
+
+    uses: ./.github/workflows/build-firmware.yml
+    with:
+      qmk_version: '0.22.14'
+      keyboard:    keyball39
+      keymap:      via
+
+  check-size:
+    name: Check size
+    runs-on: ubuntu-22.04
+    needs:
+    - build
+
+    steps:
+
+    - uses: actions/download-artifact@v6
+      with:
+        pattern: "*-firmware"
+        merge-multiple: true
+
+    - name: List size of firmwares
+      run: |
+        for f in *.hex ; do
+          cut -c 2,3 $f | awk '{s+=strtonum("0x" $1)}END{printf "%5d/28672 (%2d%%, %5d bytes free) ",s,s*100/28672,28672-s}'
+          echo $f
+        done
