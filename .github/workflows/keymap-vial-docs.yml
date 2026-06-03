@@ -1,0 +1,61 @@
+name: Update KEYMAP docs
+
+# Regenerate the physical-layout KEYMAP.html (Keyball39 via keymap) using the
+# zmk-keymap-docgen submodule, mirroring the ZMK KEYMAP.html docs flow.
+#
+# The keymap.c is drawn on the real (staggered, right-trackball) layout from
+# via.json, mapping LAYOUT arguments to the matrix via keyball39.h. Layout
+# variant 1 = "Right" ball (the physical Keyball39, 39 keys).
+
+on:
+  push:
+    paths:
+      - 'qmk_firmware/keyboards/keyball/keyball39/keymaps/via/keymap.c'
+      - 'qmk_firmware/keyboards/keyball/keyball39/via.json'
+      - 'qmk_firmware/keyboards/keyball/keyball39/keyball39.h'
+      - 'tools/keymap-docgen'
+      - '.gitmodules'
+      - '.github/workflows/keymap-vial-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-keymap-vial-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Regenerate KEYMAP.html
+        run: |
+          KB=qmk_firmware/keyboards/keyball/keyball39
+          python tools/keymap-docgen/vial_keymap_docgen.py \
+            "$KB/keymaps/via/keymap.c" \
+            --layout "$KB/via.json" \
+            --layout-macro "$KB/keyball39.h" \
+            --custom-keycodes tools/keymap-docgen/example/keyball_custom_keycodes.json \
+            --layout-variant 1 \
+            -o KEYMAP.html \
+            --title "Keyball39 (via) キーマップ"
+
+      - name: Commit KEYMAP docs if changed
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add KEYMAP.html
+          if git diff --cached --quiet; then
+            echo "KEYMAP.html is up to date."
+          else
+            git commit -m "docs: regenerate KEYMAP.html from keymap"
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
+          fi
