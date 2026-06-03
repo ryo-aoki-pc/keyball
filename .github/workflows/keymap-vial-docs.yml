@@ -1,0 +1,53 @@
+name: Update KEYMAP-vial docs
+
+# Regenerate the physical-layout KEYMAP-vial.html (Keyball39 via keymap) using
+# the zmk-keymap-docgen submodule, mirroring the ZMK KEYMAP.html docs flow.
+
+on:
+  push:
+    paths:
+      - 'qmk_firmware/keyboards/keyball/keyball39/keymaps/via/keymap.c'
+      - 'qmk_firmware/keyboards/keyball/keyball39/info.json'
+      - 'tools/keymap-docgen'
+      - '.gitmodules'
+      - '.github/workflows/keymap-vial-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-keymap-vial-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Regenerate KEYMAP-vial.html
+        run: |
+          python tools/keymap-docgen/vial_keymap_docgen.py \
+            qmk_firmware/keyboards/keyball/keyball39/keymaps/via/keymap.c \
+            --layout qmk_firmware/keyboards/keyball/keyball39/info.json \
+            --custom-keycodes tools/keymap-docgen/example/keyball_custom_keycodes.json \
+            -o KEYMAP-vial.html \
+            --title "Keyball39 (via) キーマップ"
+
+      - name: Commit KEYMAP-vial docs if changed
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add KEYMAP-vial.html
+          if git diff --cached --quiet; then
+            echo "KEYMAP-vial.html is up to date."
+          else
+            git commit -m "docs: regenerate KEYMAP-vial.html from keymap"
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
+          fi
