@@ -2,12 +2,17 @@ name: Update KEYMAP-vial docs
 
 # Regenerate the physical-layout KEYMAP-vial.html (Keyball39 via keymap) using
 # the zmk-keymap-docgen submodule, mirroring the ZMK KEYMAP.html docs flow.
+#
+# The keymap.c is drawn on the real (staggered, right-trackball) layout from
+# via.json, mapping LAYOUT arguments to the matrix via keyball39.h. Layout
+# variant 1 = "Right" ball (the physical Keyball39, 39 keys).
 
 on:
   push:
     paths:
       - 'qmk_firmware/keyboards/keyball/keyball39/keymaps/via/keymap.c'
-      - 'qmk_firmware/keyboards/keyball/keyball39/info.json'
+      - 'qmk_firmware/keyboards/keyball/keyball39/via.json'
+      - 'qmk_firmware/keyboards/keyball/keyball39/keyball39.h'
       - 'tools/keymap-docgen'
       - '.gitmodules'
       - '.github/workflows/keymap-vial-docs.yml'
@@ -32,10 +37,13 @@ jobs:
 
       - name: Regenerate KEYMAP-vial.html
         run: |
+          KB=qmk_firmware/keyboards/keyball/keyball39
           python tools/keymap-docgen/vial_keymap_docgen.py \
-            qmk_firmware/keyboards/keyball/keyball39/keymaps/via/keymap.c \
-            --layout qmk_firmware/keyboards/keyball/keyball39/info.json \
+            "$KB/keymaps/via/keymap.c" \
+            --layout "$KB/via.json" \
+            --layout-macro "$KB/keyball39.h" \
             --custom-keycodes tools/keymap-docgen/example/keyball_custom_keycodes.json \
+            --layout-variant 1 \
             -o KEYMAP-vial.html \
             --title "Keyball39 (via) キーマップ"
 
