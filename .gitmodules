@@ -1,4 +1,4 @@
 [submodule "tools/keymap-docgen"]
 	path = tools/keymap-docgen
 	url = https://github.com/ryo-aoki-pc/zmk-keymap-docgen.git
-	branch = claude/sharp-galileo-9Mpv4
+	branch = main
