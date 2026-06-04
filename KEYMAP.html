@@ -146,7 +146,7 @@
 </head>
 <body>
 <h1>Keyball39 (via) キーマップ</h1>
-<p>※ 4 個のレイヤーのキー割り当てを 1 ファイルに集約。各レイヤーの動作は実機の物理配列に合わせた「レイアウト図」セクションで確認する。</p>
+<p>※ 4 個のレイヤーのキー割り当てを 1 ファイルに集約。各レイヤーの動作は実機の物理配列に合わせた「レイアウト図」セクションで確認し、バインディングの解決経路は「経路」セクションで確認する。</p>
 <h2>レイアウト図</h2>
 <p>各レイヤーを実機の物理配列どおりに配置した図を 1 つの表にまとめる。表の各行が 1 レイヤーで、左列がレイヤー名、右のセルがそのレイヤーの図。各キーは「ラベル / タップ動作 / (ホールド動作)」を表示し、全操作（ダブルタップ / Shift+ / Ctrl+ など）はマウスオーバーのツールチップで確認できる。Tap Dance / Mod Morph の割り当てがあるレイヤーには、その操作専用の図を同じセル内に追加表示する（割り当てのないキーは薄い枠のみ）。</p>
 <table class="figures">
@@ -338,6 +338,202 @@
 <div class="key trans" style="left:258.18px;top:216.32px;width:48px;height:48px;transform:rotate(20deg);transform-origin:74.62px 80.08px" title="タップ: ▽&#10;ホールド: ▽&#10;ダブルタップ: ▽&#10;Shift+: ▽&#10;Ctrl+: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
 <div class="key trans" style="left:414.44px;top:168.48px;width:48px;height:48px;transform:rotate(-20deg);transform-origin:113.36px 127.92px" title="タップ: ▽&#10;ホールド: ▽&#10;ダブルタップ: ▽&#10;Shift+: ▽&#10;Ctrl+: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
 <div class="key trans" style="left:455px;top:169.52px;width:48px;height:48px;transform:rotate(-10deg);transform-origin:124.8px 116.48px" title="タップ: ▽&#10;ホールド: ▽&#10;ダブルタップ: ▽&#10;Shift+: ▽&#10;Ctrl+: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<h2>経路</h2>
+<p>各レイヤーのバインディング解決経路を、レイアウト図と同じ物理配列の図で表示する（経路は長いためキーはレイアウト図の 2 倍サイズ）。各キーはタップ操作の解決経路（behavior 名[添字] ▸ … ▸ 最終バインディング）を表示し、ホールドの経路がタップと異なる場合は青字で併記する。Tap Dance / Mod Morph で経路が分岐するキーは、その操作専用の図を同じセル内に追加表示する（分岐のないキーは薄い枠のみ）。全操作の経路と生バインディングはマウスオーバーのツールチップで確認できる。</p>
+<table class="figures">
+<thead>
+<tr>
+<th>レイヤー</th>
+<th>経路</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th class="fig-layer">Layer 0</th>
+<td class="fig-cell">
+<div class="kb path" style="width:715px;height:268.32px">
+<div class="key" style="left:104px;top:0px;width:48px;height:48px" title="タップ: KC_E&#10;KC_E"><span class="kt">KC_E</span></div>
+<div class="key" style="left:559px;top:0px;width:48px;height:48px" title="タップ: KC_I&#10;KC_I"><span class="kt">KC_I</span></div>
+<div class="key" style="left:156px;top:6.5px;width:48px;height:48px" title="タップ: KC_R&#10;KC_R"><span class="kt">KC_R</span></div>
+<div class="key" style="left:507px;top:6.5px;width:48px;height:48px" title="タップ: KC_U&#10;KC_U"><span class="kt">KC_U</span></div>
+<div class="key" style="left:52px;top:13px;width:48px;height:48px" title="タップ: KC_W&#10;KC_W"><span class="kt">KC_W</span></div>
+<div class="key" style="left:208px;top:13px;width:48px;height:48px" title="タップ: KC_T&#10;KC_T"><span class="kt">KC_T</span></div>
+<div class="key" style="left:455px;top:13px;width:48px;height:48px" title="タップ: KC_Y&#10;KC_Y"><span class="kt">KC_Y</span></div>
+<div class="key" style="left:611px;top:13px;width:48px;height:48px" title="タップ: KC_O&#10;KC_O"><span class="kt">KC_O</span></div>
+<div class="key" style="left:0px;top:31.2px;width:48px;height:48px" title="タップ: KC_Q&#10;KC_Q"><span class="kt">KC_Q</span></div>
+<div class="key" style="left:663px;top:31.2px;width:48px;height:48px" title="タップ: KC_P&#10;KC_P"><span class="kt">KC_P</span></div>
+<div class="key" style="left:104px;top:52px;width:48px;height:48px" title="タップ: KC_D&#10;KC_D"><span class="kt">KC_D</span></div>
+<div class="key" style="left:559px;top:52px;width:48px;height:48px" title="タップ: KC_K&#10;KC_K"><span class="kt">KC_K</span></div>
+<div class="key" style="left:156px;top:58.5px;width:48px;height:48px" title="タップ: KC_F&#10;KC_F"><span class="kt">KC_F</span></div>
+<div class="key" style="left:507px;top:58.5px;width:48px;height:48px" title="タップ: KC_J&#10;KC_J"><span class="kt">KC_J</span></div>
+<div class="key" style="left:52px;top:65px;width:48px;height:48px" title="タップ: KC_S&#10;KC_S"><span class="kt">KC_S</span></div>
+<div class="key" style="left:208px;top:65px;width:48px;height:48px" title="タップ: KC_G&#10;KC_G"><span class="kt">KC_G</span></div>
+<div class="key" style="left:455px;top:65px;width:48px;height:48px" title="タップ: KC_H&#10;KC_H"><span class="kt">KC_H</span></div>
+<div class="key" style="left:611px;top:65px;width:48px;height:48px" title="タップ: KC_L&#10;KC_L"><span class="kt">KC_L</span></div>
+<div class="key" style="left:0px;top:83.2px;width:48px;height:48px" title="タップ: KC_A&#10;KC_A"><span class="kt">KC_A</span></div>
+<div class="key" style="left:663px;top:83.2px;width:48px;height:48px" title="タップ: KC_MINS&#10;KC_MINS"><span class="kt sz9">KC_MINS</span></div>
+<div class="key" style="left:104px;top:104px;width:48px;height:48px" title="タップ: KC_C&#10;KC_C"><span class="kt">KC_C</span></div>
+<div class="key" style="left:559px;top:104px;width:48px;height:48px" title="タップ: KC_COMM&#10;KC_COMM"><span class="kt sz9">KC_COMM</span></div>
+<div class="key" style="left:156px;top:110.5px;width:48px;height:48px" title="タップ: KC_V&#10;KC_V"><span class="kt">KC_V</span></div>
+<div class="key" style="left:507px;top:110.5px;width:48px;height:48px" title="タップ: KC_M&#10;KC_M"><span class="kt">KC_M</span></div>
+<div class="key" style="left:52px;top:117px;width:48px;height:48px" title="タップ: KC_X&#10;KC_X"><span class="kt">KC_X</span></div>
+<div class="key" style="left:208px;top:117px;width:48px;height:48px" title="タップ: KC_B&#10;KC_B"><span class="kt">KC_B</span></div>
+<div class="key" style="left:455px;top:117px;width:48px;height:48px" title="タップ: KC_N&#10;KC_N"><span class="kt">KC_N</span></div>
+<div class="key" style="left:611px;top:117px;width:48px;height:48px" title="タップ: KC_DOT&#10;KC_DOT"><span class="kt sz10">KC_DOT</span></div>
+<div class="key" style="left:0px;top:135.2px;width:48px;height:48px" title="タップ: KC_Z&#10;KC_Z"><span class="kt">KC_Z</span></div>
+<div class="key" style="left:663px;top:135.2px;width:48px;height:48px" title="タップ: KC_SLSH&#10;KC_SLSH"><span class="kt sz9">KC_SLSH</span></div>
+<div class="key" style="left:104px;top:156px;width:48px;height:48px" title="タップ: KC_LALT&#10;KC_LALT"><span class="kt sz9">KC_LALT</span></div>
+<div class="key" style="left:52px;top:169px;width:48px;height:48px" title="タップ: KC_LGUI&#10;KC_LGUI"><span class="kt sz9">KC_LGUI</span></div>
+<div class="key" style="left:163.8px;top:182px;width:48px;height:48px" title="タップ: LSFT_T(KC_LNG2)&#10;LSFT_T(KC_LNG2)"><span class="kt sz7">LSFT_T(KC_LNG2)</span></div>
+<div class="key" style="left:0px;top:187.2px;width:48px;height:48px" title="タップ: KC_LCTL&#10;KC_LCTL"><span class="kt sz9">KC_LCTL</span></div>
+<div class="key" style="left:663px;top:187.2px;width:48px;height:48px" title="タップ: KC_RSFT&#10;KC_RSFT"><span class="kt sz9">KC_RSFT</span></div>
+<div class="key" style="left:210.6px;top:193.7px;width:48px;height:48px;transform:rotate(10deg);transform-origin:67.6px 92.3px" title="タップ: LT(1,KC_SPC)&#10;LT(1,KC_SPC)"><span class="kt sz7">LT(1,KC_SPC)</span></div>
+<div class="key" style="left:258.18px;top:216.32px;width:48px;height:48px;transform:rotate(20deg);transform-origin:74.62px 80.08px" title="タップ: LT(3,KC_LNG1)&#10;LT(3,KC_LNG1)"><span class="kt sz7">LT(3,KC_LNG1)</span></div>
+<div class="key" style="left:414.44px;top:168.48px;width:48px;height:48px;transform:rotate(-20deg);transform-origin:113.36px 127.92px" title="タップ: KC_BSPC&#10;KC_BSPC"><span class="kt sz9">KC_BSPC</span></div>
+<div class="key" style="left:455px;top:169.52px;width:48px;height:48px;transform:rotate(-10deg);transform-origin:124.8px 116.48px" title="タップ: LT(2,KC_ENT)&#10;LT(2,KC_ENT)"><span class="kt sz7">LT(2,KC_ENT)</span></div>
+</div>
+</td>
+</tr>
+<tr>
+<th class="fig-layer">Layer 1</th>
+<td class="fig-cell">
+<div class="kb path" style="width:715px;height:268.32px">
+<div class="key" style="left:104px;top:0px;width:48px;height:48px" title="タップ: KC_F3&#10;KC_F3"><span class="kt">KC_F3</span></div>
+<div class="key" style="left:559px;top:0px;width:48px;height:48px" title="タップ: KC_F8&#10;KC_F8"><span class="kt">KC_F8</span></div>
+<div class="key" style="left:156px;top:6.5px;width:48px;height:48px" title="タップ: KC_F4&#10;KC_F4"><span class="kt">KC_F4</span></div>
+<div class="key" style="left:507px;top:6.5px;width:48px;height:48px" title="タップ: KC_F7&#10;KC_F7"><span class="kt">KC_F7</span></div>
+<div class="key" style="left:52px;top:13px;width:48px;height:48px" title="タップ: KC_F2&#10;KC_F2"><span class="kt">KC_F2</span></div>
+<div class="key" style="left:208px;top:13px;width:48px;height:48px" title="タップ: KC_RBRC&#10;KC_RBRC"><span class="kt sz9">KC_RBRC</span></div>
+<div class="key" style="left:455px;top:13px;width:48px;height:48px" title="タップ: KC_F6&#10;KC_F6"><span class="kt">KC_F6</span></div>
+<div class="key" style="left:611px;top:13px;width:48px;height:48px" title="タップ: KC_F9&#10;KC_F9"><span class="kt">KC_F9</span></div>
+<div class="key" style="left:0px;top:31.2px;width:48px;height:48px" title="タップ: KC_F1&#10;KC_F1"><span class="kt">KC_F1</span></div>
+<div class="key" style="left:663px;top:31.2px;width:48px;height:48px" title="タップ: KC_F10&#10;KC_F10"><span class="kt sz10">KC_F10</span></div>
+<div class="key" style="left:104px;top:52px;width:48px;height:48px" title="タップ: S(KC_6)&#10;S(KC_6)"><span class="kt sz9">S(KC_6)</span></div>
+<div class="key" style="left:559px;top:52px;width:48px;height:48px" title="タップ: KC_PGUP&#10;KC_PGUP"><span class="kt sz9">KC_PGUP</span></div>
+<div class="key" style="left:156px;top:58.5px;width:48px;height:48px" title="タップ: S(KC_INT3)&#10;S(KC_INT3)"><span class="kt sz7">S(KC_INT3)</span></div>
+<div class="key" style="left:507px;top:58.5px;width:48px;height:48px" title="タップ: KC_BTN1&#10;KC_BTN1"><span class="kt sz9">KC_BTN1</span></div>
+<div class="key" style="left:52px;top:65px;width:48px;height:48px" title="タップ: KC_EXLM&#10;KC_EXLM"><span class="kt sz9">KC_EXLM</span></div>
+<div class="key" style="left:208px;top:65px;width:48px;height:48px" title="タップ: S(KC_8)&#10;S(KC_8)"><span class="kt sz9">S(KC_8)</span></div>
+<div class="key" style="left:455px;top:65px;width:48px;height:48px" title="タップ: S(KC_INT1)&#10;S(KC_INT1)"><span class="kt sz7">S(KC_INT1)</span></div>
+<div class="key" style="left:611px;top:65px;width:48px;height:48px" title="タップ: KC_BTN2&#10;KC_BTN2"><span class="kt sz9">KC_BTN2</span></div>
+<div class="key" style="left:0px;top:83.2px;width:48px;height:48px" title="タップ: KC_F5&#10;KC_F5"><span class="kt">KC_F5</span></div>
+<div class="key" style="left:663px;top:83.2px;width:48px;height:48px" title="タップ: KC_SCLN&#10;KC_SCLN"><span class="kt sz9">KC_SCLN</span></div>
+<div class="key" style="left:104px;top:104px;width:48px;height:48px" title="タップ: S(KC_7)&#10;S(KC_7)"><span class="kt sz9">S(KC_7)</span></div>
+<div class="key" style="left:559px;top:104px;width:48px;height:48px" title="タップ: KC_PGDN&#10;KC_PGDN"><span class="kt sz9">KC_PGDN</span></div>
+<div class="key" style="left:156px;top:110.5px;width:48px;height:48px" title="タップ: S(KC_2)&#10;S(KC_2)"><span class="kt sz9">S(KC_2)</span></div>
+<div class="key" style="left:507px;top:110.5px;width:48px;height:48px" title="タップ: KC_DLR&#10;KC_DLR"><span class="kt sz10">KC_DLR</span></div>
+<div class="key" style="left:52px;top:117px;width:48px;height:48px" title="タップ: S(KC_LBRC)&#10;S(KC_LBRC)"><span class="kt sz7">S(KC_LBRC)</span></div>
+<div class="key" style="left:208px;top:117px;width:48px;height:48px" title="タップ: S(KC_RBRC)&#10;S(KC_RBRC)"><span class="kt sz7">S(KC_RBRC)</span></div>
+<div class="key" style="left:455px;top:117px;width:48px;height:48px" title="タップ: KC_LBRC&#10;KC_LBRC"><span class="kt sz9">KC_LBRC</span></div>
+<div class="key" style="left:611px;top:117px;width:48px;height:48px" title="タップ: KC_BTN3&#10;KC_BTN3"><span class="kt sz9">KC_BTN3</span></div>
+<div class="key" style="left:0px;top:135.2px;width:48px;height:48px" title="タップ: S(KC_EQL)&#10;S(KC_EQL)"><span class="kt sz7">S(KC_EQL)</span></div>
+<div class="key" style="left:663px;top:135.2px;width:48px;height:48px" title="タップ: KC_F11&#10;KC_F11"><span class="kt sz10">KC_F11</span></div>
+<div class="key" style="left:104px;top:156px;width:48px;height:48px" title="タップ: S(KC_3)&#10;S(KC_3)"><span class="kt sz9">S(KC_3)</span></div>
+<div class="key" style="left:52px;top:169px;width:48px;height:48px" title="タップ: KC_EQL&#10;KC_EQL"><span class="kt sz10">KC_EQL</span></div>
+<div class="key trans" style="left:163.8px;top:182px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:0px;top:187.2px;width:48px;height:48px" title="タップ: KC_INT1&#10;KC_INT1"><span class="kt sz9">KC_INT1</span></div>
+<div class="key" style="left:663px;top:187.2px;width:48px;height:48px" title="タップ: KC_F12&#10;KC_F12"><span class="kt sz10">KC_F12</span></div>
+<div class="key trans" style="left:210.6px;top:193.7px;width:48px;height:48px;transform:rotate(10deg);transform-origin:67.6px 92.3px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:258.18px;top:216.32px;width:48px;height:48px;transform:rotate(20deg);transform-origin:74.62px 80.08px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:414.44px;top:168.48px;width:48px;height:48px;transform:rotate(-20deg);transform-origin:113.36px 127.92px" title="タップ: TO(2)&#10;TO(2)"><span class="kt">TO(2)</span></div>
+<div class="key" style="left:455px;top:169.52px;width:48px;height:48px;transform:rotate(-10deg);transform-origin:124.8px 116.48px" title="タップ: TO(0)&#10;TO(0)"><span class="kt">TO(0)</span></div>
+</div>
+</td>
+</tr>
+<tr>
+<th class="fig-layer">Layer 2</th>
+<td class="fig-cell">
+<div class="kb path" style="width:715px;height:268.32px">
+<div class="key" style="left:104px;top:0px;width:48px;height:48px" title="タップ: KC_8&#10;KC_8"><span class="kt">KC_8</span></div>
+<div class="key" style="left:559px;top:0px;width:48px;height:48px" title="タップ: KC_BTN3&#10;KC_BTN3"><span class="kt sz9">KC_BTN3</span></div>
+<div class="key" style="left:156px;top:6.5px;width:48px;height:48px" title="タップ: KC_9&#10;KC_9"><span class="kt">KC_9</span></div>
+<div class="key trans" style="left:507px;top:6.5px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:52px;top:13px;width:48px;height:48px" title="タップ: KC_7&#10;KC_7"><span class="kt">KC_7</span></div>
+<div class="key" style="left:208px;top:13px;width:48px;height:48px" title="タップ: KC_MINS&#10;KC_MINS"><span class="kt sz9">KC_MINS</span></div>
+<div class="key" style="left:455px;top:13px;width:48px;height:48px" title="タップ: KC_NUHS&#10;KC_NUHS"><span class="kt sz9">KC_NUHS</span></div>
+<div class="key trans" style="left:611px;top:13px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:0px;top:31.2px;width:48px;height:48px" title="タップ: KC_TAB&#10;KC_TAB"><span class="kt sz10">KC_TAB</span></div>
+<div class="key" style="left:663px;top:31.2px;width:48px;height:48px" title="タップ: KC_BSPC&#10;KC_BSPC"><span class="kt sz9">KC_BSPC</span></div>
+<div class="key" style="left:104px;top:52px;width:48px;height:48px" title="タップ: KC_5&#10;KC_5"><span class="kt">KC_5</span></div>
+<div class="key" style="left:559px;top:52px;width:48px;height:48px" title="タップ: KC_UP&#10;KC_UP"><span class="kt">KC_UP</span></div>
+<div class="key" style="left:156px;top:58.5px;width:48px;height:48px" title="タップ: KC_6&#10;KC_6"><span class="kt">KC_6</span></div>
+<div class="key" style="left:507px;top:58.5px;width:48px;height:48px" title="タップ: KC_BTN1&#10;KC_BTN1"><span class="kt sz9">KC_BTN1</span></div>
+<div class="key" style="left:52px;top:65px;width:48px;height:48px" title="タップ: KC_4&#10;KC_4"><span class="kt">KC_4</span></div>
+<div class="key" style="left:208px;top:65px;width:48px;height:48px" title="タップ: S(KC_SCLN)&#10;S(KC_SCLN)"><span class="kt sz7">S(KC_SCLN)</span></div>
+<div class="key" style="left:455px;top:65px;width:48px;height:48px" title="タップ: S(KC_9)&#10;S(KC_9)"><span class="kt sz9">S(KC_9)</span></div>
+<div class="key" style="left:611px;top:65px;width:48px;height:48px" title="タップ: KC_BTN2&#10;KC_BTN2"><span class="kt sz9">KC_BTN2</span></div>
+<div class="key" style="left:0px;top:83.2px;width:48px;height:48px" title="タップ: S(KC_QUOT)&#10;S(KC_QUOT)"><span class="kt sz7">S(KC_QUOT)</span></div>
+<div class="key" style="left:663px;top:83.2px;width:48px;height:48px" title="タップ: KC_QUOT&#10;KC_QUOT"><span class="kt sz9">KC_QUOT</span></div>
+<div class="key" style="left:104px;top:104px;width:48px;height:48px" title="タップ: KC_2&#10;KC_2"><span class="kt">KC_2</span></div>
+<div class="key" style="left:559px;top:104px;width:48px;height:48px" title="タップ: KC_DOWN&#10;KC_DOWN"><span class="kt sz9">KC_DOWN</span></div>
+<div class="key" style="left:156px;top:110.5px;width:48px;height:48px" title="タップ: KC_3&#10;KC_3"><span class="kt">KC_3</span></div>
+<div class="key" style="left:507px;top:110.5px;width:48px;height:48px" title="タップ: KC_LEFT&#10;KC_LEFT"><span class="kt sz9">KC_LEFT</span></div>
+<div class="key" style="left:52px;top:117px;width:48px;height:48px" title="タップ: KC_1&#10;KC_1"><span class="kt">KC_1</span></div>
+<div class="key" style="left:208px;top:117px;width:48px;height:48px" title="タップ: S(KC_MINS)&#10;S(KC_MINS)"><span class="kt sz7">S(KC_MINS)</span></div>
+<div class="key" style="left:455px;top:117px;width:48px;height:48px" title="タップ: S(KC_NUHS)&#10;S(KC_NUHS)"><span class="kt sz7">S(KC_NUHS)</span></div>
+<div class="key" style="left:611px;top:117px;width:48px;height:48px" title="タップ: KC_RGHT&#10;KC_RGHT"><span class="kt sz9">KC_RGHT</span></div>
+<div class="key" style="left:0px;top:135.2px;width:48px;height:48px" title="タップ: KC_SLSH&#10;KC_SLSH"><span class="kt sz9">KC_SLSH</span></div>
+<div class="key trans" style="left:663px;top:135.2px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:104px;top:156px;width:48px;height:48px" title="タップ: KC_DOT&#10;KC_DOT"><span class="kt sz10">KC_DOT</span></div>
+<div class="key" style="left:52px;top:169px;width:48px;height:48px" title="タップ: KC_0&#10;KC_0"><span class="kt">KC_0</span></div>
+<div class="key" style="left:163.8px;top:182px;width:48px;height:48px" title="タップ: KC_DEL&#10;KC_DEL"><span class="kt sz10">KC_DEL</span></div>
+<div class="key" style="left:0px;top:187.2px;width:48px;height:48px" title="タップ: KC_ESC&#10;KC_ESC"><span class="kt sz10">KC_ESC</span></div>
+<div class="key trans" style="left:663px;top:187.2px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:210.6px;top:193.7px;width:48px;height:48px;transform:rotate(10deg);transform-origin:67.6px 92.3px" title="タップ: KC_ENT&#10;KC_ENT"><span class="kt sz10">KC_ENT</span></div>
+<div class="key" style="left:258.18px;top:216.32px;width:48px;height:48px;transform:rotate(20deg);transform-origin:74.62px 80.08px" title="タップ: KC_BSPC&#10;KC_BSPC"><span class="kt sz9">KC_BSPC</span></div>
+<div class="key trans" style="left:414.44px;top:168.48px;width:48px;height:48px;transform:rotate(-20deg);transform-origin:113.36px 127.92px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:455px;top:169.52px;width:48px;height:48px;transform:rotate(-10deg);transform-origin:124.8px 116.48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+</div>
+</td>
+</tr>
+<tr>
+<th class="fig-layer">Layer 3</th>
+<td class="fig-cell">
+<div class="kb path" style="width:715px;height:268.32px">
+<div class="key" style="left:104px;top:0px;width:48px;height:48px" title="タップ: AML_I50&#10;AML_I50"><span class="kt sz9">AML_I50</span></div>
+<div class="key" style="left:559px;top:0px;width:48px;height:48px" title="タップ: SSNP_HOR&#10;SSNP_HOR"><span class="kt sz8">SSNP_HOR</span></div>
+<div class="key" style="left:156px;top:6.5px;width:48px;height:48px" title="タップ: AML_D50&#10;AML_D50"><span class="kt sz9">AML_D50</span></div>
+<div class="key trans" style="left:507px;top:6.5px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:52px;top:13px;width:48px;height:48px" title="タップ: AML_TO&#10;AML_TO"><span class="kt sz10">AML_TO</span></div>
+<div class="key trans" style="left:208px;top:13px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:455px;top:13px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:611px;top:13px;width:48px;height:48px" title="タップ: SSNP_VRT&#10;SSNP_VRT"><span class="kt sz8">SSNP_VRT</span></div>
+<div class="key" style="left:0px;top:31.2px;width:48px;height:48px" title="タップ: RGB_TOG&#10;RGB_TOG"><span class="kt sz9">RGB_TOG</span></div>
+<div class="key" style="left:663px;top:31.2px;width:48px;height:48px" title="タップ: SSNP_FRE&#10;SSNP_FRE"><span class="kt sz8">SSNP_FRE</span></div>
+<div class="key" style="left:104px;top:52px;width:48px;height:48px" title="タップ: RGB_SAI&#10;RGB_SAI"><span class="kt sz9">RGB_SAI</span></div>
+<div class="key trans" style="left:559px;top:52px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:156px;top:58.5px;width:48px;height:48px" title="タップ: RGB_VAI&#10;RGB_VAI"><span class="kt sz9">RGB_VAI</span></div>
+<div class="key trans" style="left:507px;top:58.5px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:52px;top:65px;width:48px;height:48px" title="タップ: RGB_HUI&#10;RGB_HUI"><span class="kt sz9">RGB_HUI</span></div>
+<div class="key" style="left:208px;top:65px;width:48px;height:48px" title="タップ: SCRL_DVI&#10;SCRL_DVI"><span class="kt sz8">SCRL_DVI</span></div>
+<div class="key trans" style="left:455px;top:65px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:611px;top:65px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:0px;top:83.2px;width:48px;height:48px" title="タップ: RGB_MOD&#10;RGB_MOD"><span class="kt sz9">RGB_MOD</span></div>
+<div class="key trans" style="left:663px;top:83.2px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:104px;top:104px;width:48px;height:48px" title="タップ: RGB_SAD&#10;RGB_SAD"><span class="kt sz9">RGB_SAD</span></div>
+<div class="key" style="left:559px;top:104px;width:48px;height:48px" title="タップ: CPI_I100&#10;CPI_I100"><span class="kt sz8">CPI_I100</span></div>
+<div class="key" style="left:156px;top:110.5px;width:48px;height:48px" title="タップ: RGB_VAD&#10;RGB_VAD"><span class="kt sz9">RGB_VAD</span></div>
+<div class="key" style="left:507px;top:110.5px;width:48px;height:48px" title="タップ: CPI_D100&#10;CPI_D100"><span class="kt sz8">CPI_D100</span></div>
+<div class="key" style="left:52px;top:117px;width:48px;height:48px" title="タップ: RGB_HUD&#10;RGB_HUD"><span class="kt sz9">RGB_HUD</span></div>
+<div class="key" style="left:208px;top:117px;width:48px;height:48px" title="タップ: SCRL_DVD&#10;SCRL_DVD"><span class="kt sz8">SCRL_DVD</span></div>
+<div class="key" style="left:455px;top:117px;width:48px;height:48px" title="タップ: CPI_D1K&#10;CPI_D1K"><span class="kt sz9">CPI_D1K</span></div>
+<div class="key" style="left:611px;top:117px;width:48px;height:48px" title="タップ: CPI_I1K&#10;CPI_I1K"><span class="kt sz9">CPI_I1K</span></div>
+<div class="key" style="left:0px;top:135.2px;width:48px;height:48px" title="タップ: RGB_RMOD&#10;RGB_RMOD"><span class="kt sz8">RGB_RMOD</span></div>
+<div class="key" style="left:663px;top:135.2px;width:48px;height:48px" title="タップ: KBC_SAVE&#10;KBC_SAVE"><span class="kt sz8">KBC_SAVE</span></div>
+<div class="key trans" style="left:104px;top:156px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:52px;top:169px;width:48px;height:48px" title="タップ: KBC_RST&#10;KBC_RST"><span class="kt sz9">KBC_RST</span></div>
+<div class="key trans" style="left:163.8px;top:182px;width:48px;height:48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key" style="left:0px;top:187.2px;width:48px;height:48px" title="タップ: QK_BOOT&#10;QK_BOOT"><span class="kt sz9">QK_BOOT</span></div>
+<div class="key" style="left:663px;top:187.2px;width:48px;height:48px" title="タップ: QK_BOOT&#10;QK_BOOT"><span class="kt sz9">QK_BOOT</span></div>
+<div class="key trans" style="left:210.6px;top:193.7px;width:48px;height:48px;transform:rotate(10deg);transform-origin:67.6px 92.3px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:258.18px;top:216.32px;width:48px;height:48px;transform:rotate(20deg);transform-origin:74.62px 80.08px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:414.44px;top:168.48px;width:48px;height:48px;transform:rotate(-20deg);transform-origin:113.36px 127.92px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
+<div class="key trans" style="left:455px;top:169.52px;width:48px;height:48px;transform:rotate(-10deg);transform-origin:124.8px 116.48px" title="タップ: ▽&#10;&amp;trans"><span class="kt">▽</span></div>
 </div>
 </td>
 </tr>
