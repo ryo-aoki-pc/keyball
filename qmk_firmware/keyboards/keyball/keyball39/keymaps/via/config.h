@@ -46,3 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define POINTING_DEVICE_AUTO_MOUSE_ENABLE
 #define AUTO_MOUSE_DEFAULT_LAYER 1
 #define AUTO_MOUSE_TIME 10000
+
+// スクロール速度を 1 段階遅くする (1/8 -> 1/16)。値が大きいほど遅い (範囲 1-7)。
+// カーソル速度 (CPI) には影響しない。
+#define KEYBALL_SCROLL_DIV_DEFAULT 5
