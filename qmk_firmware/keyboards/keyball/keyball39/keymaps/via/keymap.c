@@ -20,30 +20,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quantum.h"
 
+// Keyboard Quantizer Mini (vial-qmk-kq-mini) 併用前提のキーマップ。
+// MT/LT・記号・Vim レイヤーはすべて kq-mini 側 (LisM キーマップの EEPROM
+// デフォルト) が処理するため、ベースレイヤーは LisM の BASE 配列に対応する
+// 素の HID コードを送るだけにする。レイヤーキーは lism.vialmap.json の
+// 割当に合わせる: &mo FUNC → Grave / &mo SYM → 右 Alt / &mo VIM_BASE → CapsLock。
+// kq-mini に含まれないマウスレイヤー (LisM の MOUSE_MOVE / MOUSE_SCROLL) は
+// 本体側のレイヤー 1 (AML) / 2 で再現する。
+
+// LisM の MOUSE_SCROLL に相当するスクロールレイヤー
+#define KEYBALL_SCROLL_LAYER 2
+
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-  // keymap for default (VIA)
+  // LisM BASE 相当 (kq-mini が MT/LT を付与するため素のキーコードのみ)
   [0] = LAYOUT_universal(
     KC_Q     , KC_W     , KC_E     , KC_R     , KC_T     ,                            KC_Y     , KC_U     , KC_I     , KC_O     , KC_P     ,
     KC_A     , KC_S     , KC_D     , KC_F     , KC_G     ,                            KC_H     , KC_J     , KC_K     , KC_L     , KC_MINS  ,
     KC_Z     , KC_X     , KC_C     , KC_V     , KC_B     ,                            KC_N     , KC_M     , KC_COMM  , KC_DOT   , KC_SLSH  ,
-    KC_LCTL  , KC_LGUI  , KC_LALT  ,LSFT_T(KC_LNG2),LT(1,KC_SPC),LT(3,KC_LNG1),KC_BSPC,LT(2,KC_ENT),LSFT_T(KC_LNG2),KC_RALT,KC_RGUI, KC_RSFT
+    KC_GRV   , KC_LGUI  , KC_LALT  , MO(3)    , KC_SPC   , KC_RALT  ,      KC_CAPS  , KC_ENT   , KC_NO    , KC_NO    , KC_GRV   , KC_GRV
   ),
 
+  // LisM MOUSE_MOVE 相当 (AML レイヤー): D / K でスクロールレイヤーへ
   [1] = LAYOUT_universal(
-    KC_F1    , KC_F2    , KC_F3    , KC_F4    , KC_RBRC  ,                            KC_F6    , KC_F7    , KC_F8    , KC_F9    , KC_F10   ,
-    KC_F5    , KC_EXLM  , S(KC_6)  ,S(KC_INT3), S(KC_8)  ,                           S(KC_INT1), KC_BTN1  , KC_PGUP  , KC_BTN2  , KC_SCLN  ,
-    S(KC_EQL),S(KC_LBRC),S(KC_7)   , S(KC_2)  ,S(KC_RBRC),                            KC_LBRC  , KC_DLR   , KC_PGDN  , KC_BTN3  , KC_F11   ,
-    KC_INT1  , KC_EQL   , S(KC_3)  , _______  , _______  , _______  ,      TO(2)    , TO(0)    , _______  , KC_RALT  , KC_RGUI  , KC_F12
+    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
+    KC_NO    , KC_NO    , MO(2)    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , MO(2)    , KC_NO    , KC_NO    ,
+    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
+    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
   ),
 
+  // LisM MOUSE_SCROLL 相当: ボールはスクロール、S/F/J/L=クリック、X/V/M/.=戻る/進む
   [2] = LAYOUT_universal(
-    KC_TAB   , KC_7     , KC_8     , KC_9     , KC_MINS  ,                            KC_NUHS  , _______  , KC_BTN3  , _______  , KC_BSPC  ,
-   S(KC_QUOT), KC_4     , KC_5     , KC_6     ,S(KC_SCLN),                            S(KC_9)  , KC_BTN1  , KC_UP    , KC_BTN2  , KC_QUOT  ,
-    KC_SLSH  , KC_1     , KC_2     , KC_3     ,S(KC_MINS),                           S(KC_NUHS), KC_LEFT  , KC_DOWN  , KC_RGHT  , _______  ,
-    KC_ESC   , KC_0     , KC_DOT   , KC_DEL   , KC_ENT   , KC_BSPC  ,      _______  , _______  , _______  , _______  , _______  , _______
+    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
+    KC_NO    , KC_BTN2  , KC_NO    , KC_BTN1  , KC_NO    ,                            KC_NO    , KC_BTN1  , KC_NO    , KC_BTN2  , KC_NO    ,
+    KC_NO    , KC_BTN5  , KC_NO    , KC_BTN4  , KC_NO    ,                            KC_NO    , KC_BTN4  , KC_NO    , KC_BTN5  , KC_NO    ,
+    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
   ),
 
+  // 設定レイヤー (RGB / AML / スクロールスナップ / スクロール速度 / CPI)
   [3] = LAYOUT_universal(
     RGB_TOG  , AML_TO   , AML_I50  , AML_D50  , _______  ,                            _______  , _______  , SSNP_HOR , SSNP_VRT , SSNP_FRE ,
     RGB_MOD  , RGB_HUI  , RGB_SAI  , RGB_VAI  , SCRL_DVI ,                            _______  , _______  , _______  , _______  , _______  ,
@@ -55,14 +69,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
-// ���� K �L�[�̈ʒu�Bkeyball39.h �� LAYOUT_no_ball �� K = R12�B
-// �E�葤�̓}�g���N�X row 4?7�BR1x �� row 5�AR12 �� col 2�B
+// AML 中も押下でデフォルトレイヤーに戻さない物理キー (LisM の
+// &zip_temp_layer excluded-positions = <12 17> = D / K に相当)。
+// keyball39.h の LAYOUT_no_ball で D = L12 (row 1, col 2)、
+// K = R12 (右手側は row 4〜7 で R1x が row 5、col 2)。
+#define KEYBALL_D_KEYPOS_ROW 1
+#define KEYBALL_D_KEYPOS_COL 2
 #define KEYBALL_K_KEYPOS_ROW 5
 #define KEYBALL_K_KEYPOS_COL 2
 
-static bool is_keyball_k_key(keyrecord_t *record) {
-  return record->event.key.row == KEYBALL_K_KEYPOS_ROW &&
-         record->event.key.col == KEYBALL_K_KEYPOS_COL;
+static bool is_keyball_aml_excluded_key(keyrecord_t *record) {
+  return (record->event.key.row == KEYBALL_D_KEYPOS_ROW &&
+          record->event.key.col == KEYBALL_D_KEYPOS_COL) ||
+         (record->event.key.row == KEYBALL_K_KEYPOS_ROW &&
+          record->event.key.col == KEYBALL_K_KEYPOS_COL);
+}
+
+static bool is_auto_mouse_allowed_layer(uint8_t layer) {
+  return layer == get_auto_mouse_layer() || layer == KEYBALL_SCROLL_LAYER;
 }
 
 static bool is_auto_mouse_allowed_key(uint16_t keycode) {
@@ -82,43 +106,43 @@ static bool is_auto_mouse_allowed_key(uint16_t keycode) {
       return true;
   }
 
-  uint8_t target_layer = get_auto_mouse_layer();
-
   switch (keycode) {
     case QK_TO ... QK_TO_MAX:
-      return QK_TO_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_TO_GET_LAYER(keycode));
     case QK_TOGGLE_LAYER ... QK_TOGGLE_LAYER_MAX:
-      return QK_TOGGLE_LAYER_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_TOGGLE_LAYER_GET_LAYER(keycode));
     case QK_MOMENTARY ... QK_MOMENTARY_MAX:
-      return QK_MOMENTARY_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_MOMENTARY_GET_LAYER(keycode));
     case QK_LAYER_MOD ... QK_LAYER_MOD_MAX:
-      return QK_LAYER_MOD_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_LAYER_MOD_GET_LAYER(keycode));
 #    ifndef NO_ACTION_TAPPING
     case QK_LAYER_TAP_TOGGLE ... QK_LAYER_TAP_TOGGLE_MAX:
-      return QK_LAYER_TAP_TOGGLE_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_LAYER_TAP_TOGGLE_GET_LAYER(keycode));
     case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
-      return QK_LAYER_TAP_GET_LAYER(keycode) == target_layer;
+      return is_auto_mouse_allowed_layer(QK_LAYER_TAP_GET_LAYER(keycode));
 #    endif
   }
 
   return false;
 }
 
-// AML �L�����A���� K �L�[���}�E�X�L�[�����Ƃ� AML �����������Ȃ��B
+// AML 有効中、物理 D / K キーをマウスキー扱いとし AML を解除させない。
 bool is_mouse_record_user(uint16_t keycode, keyrecord_t *record) {
-  return is_keyball_k_key(record) && layer_state_is(get_auto_mouse_layer());
+  return is_keyball_aml_excluded_key(record) &&
+         layer_state_is(get_auto_mouse_layer());
 }
 
 void keyboard_post_init_user(void) {
   set_auto_mouse_enable(true);
   set_auto_mouse_timeout(AUTO_MOUSE_TIME);
-  // �X�N���[�����㉺���E�t���[�����ɂ���i����̏c�Œ�������j
+  // スクロールを上下左右フリー方向にする（既定の縦固定を解除）
   keyball_set_scrollsnap_mode(KEYBALL_SCROLLSNAP_MODE_FREE);
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed && layer_state_is(get_auto_mouse_layer()) &&
-      !is_keyball_k_key(record) && !is_auto_mouse_allowed_key(keycode)) {
+      !is_keyball_aml_excluded_key(record) &&
+      !is_auto_mouse_allowed_key(keycode)) {
     auto_mouse_reset_trigger(true);
   }
 
@@ -128,8 +152,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #endif
 
 layer_state_t layer_state_set_user(layer_state_t state) {
-    // Auto enable scroll mode when the highest layer is 3
-    keyball_set_scroll_mode(get_highest_layer(state) == 3);
+    // スクロールレイヤーが最上位のときだけボールをスクロールモードにする
+    keyball_set_scroll_mode(get_highest_layer(state) == KEYBALL_SCROLL_LAYER);
     return state;
 }
 
