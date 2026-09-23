@@ -47,6 +47,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_MOUSE_DEFAULT_LAYER 1
 #define AUTO_MOUSE_TIME 10000
 
+// キー入力直後にボールを動かしても AML を発動させない猶予 (ms)。LisM の
+// &zip_temp_layer require-prior-idle-ms = <200> に対応する (QMK は押下だけでなく
+// 解放でもこのタイマーを再始動するため厳密には同一ではないが、値は同じ)。
+// QMK 0.22.14 の既定値 (GET_TAPPING_TERM(KC_MS_BTN1) = TAPPING_TERM = 200) と
+// 同じ値だが、TAPPING_TERM の変更に引きずられないよう明示しておく (挙動の変更はない)。
+#define AUTO_MOUSE_DELAY 200
+
 // スクロール速度を 1 段階遅くする (1/8 -> 1/16)。値が大きいほど遅い (範囲 1-7)。
 // カーソル速度 (CPI) には影響しない。
 #define KEYBALL_SCROLL_DIV_DEFAULT 5
