@@ -140,21 +140,26 @@ void keyboard_pre_init_kb(void) {
 }
 #endif
 
+// setup_sensor configures the optical sensor which has just been detected.
+static void setup_sensor(void) {
+#if defined(KEYBALL_PMW3360_UPLOAD_SROM_ID)
+#    if KEYBALL_PMW3360_UPLOAD_SROM_ID == 0x04
+    pmw3360_srom_upload(pmw3360_srom_0x04);
+#    elif KEYBALL_PMW3360_UPLOAD_SROM_ID == 0x81
+    pmw3360_srom_upload(pmw3360_srom_0x81);
+#    else
+#        error Invalid value for KEYBALL_PMW3360_UPLOAD_SROM_ID. Please choose 0x04 or 0x81 or disable it.
+#    endif
+#endif
+    pmw3360_cpi_set(keyball_get_cpi() - 1);
+}
+
 void pointing_device_driver_init(void) {
 #if KEYBALL_MODEL != 46
     keyball.this_have_ball = pmw3360_init();
 #endif
     if (keyball.this_have_ball) {
-#if defined(KEYBALL_PMW3360_UPLOAD_SROM_ID)
-#    if KEYBALL_PMW3360_UPLOAD_SROM_ID == 0x04
-        pmw3360_srom_upload(pmw3360_srom_0x04);
-#    elif KEYBALL_PMW3360_UPLOAD_SROM_ID == 0x81
-        pmw3360_srom_upload(pmw3360_srom_0x81);
-#    else
-#        error Invalid value for KEYBALL_PMW3360_UPLOAD_SROM_ID. Please choose 0x04 or 0x81 or disable it.
-#    endif
-#endif
-        pmw3360_cpi_set(CPI_DEFAULT - 1);
+        setup_sensor();
     }
 }
 
@@ -291,6 +296,22 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t rep) {
 
 #ifdef SPLIT_KEYBOARD
 
+// apply_ball_layout adjusts the layout on primary according to the current
+// combination of trackballs.
+static void apply_ball_layout(void) {
+#    ifdef VIA_ENABLE
+    // adjust VIA layout options according to current combination.
+    uint8_t  layouts = (keyball.this_have_ball ? (is_keyboard_left() ? 0x02 : 0x01) : 0x00) | (keyball.that_have_ball ? (is_keyboard_left() ? 0x01 : 0x02) : 0x00);
+    uint32_t curr    = via_get_layout_options();
+    uint32_t next    = (curr & ~0x3) | layouts;
+    if (next != curr) {
+        via_set_layout_options(next);
+    }
+#    endif
+
+    keyball_on_adjust_layout(KEYBALL_ADJUST_PRIMARY);
+}
+
 static void rpc_get_info_handler(uint8_t in_buflen, const void *in_data, uint8_t out_buflen, void *out_data) {
     keyball_info_t info = {
         .ballcnt = keyball.this_have_ball ? 1 : 0,
@@ -304,7 +325,25 @@ static void rpc_get_info_invoke(void) {
     static uint32_t last_sync  = 0;
     static int      round      = 0;
     uint32_t        now        = timer_read32();
-    if (negotiated || TIMER_DIFF_32(now, last_sync) < KEYBALL_TX_GETINFO_INTERVAL) {
+    if (negotiated) {
+#    if KEYBALL_TX_GETINFO_RETRY_INTERVAL > 0
+        // Keep asking the secondary while no trackball has been found there:
+        // it may have booted too late for the negotiation, or detected its
+        // sensor after that.
+        if (keyball.that_have_ball || TIMER_DIFF_32(now, last_sync) < KEYBALL_TX_GETINFO_RETRY_INTERVAL) {
+            return;
+        }
+        last_sync           = now;
+        keyball_info_t recv = {0};
+        if (transaction_rpc_exec(KEYBALL_GET_INFO, 0, NULL, sizeof(recv), &recv) && recv.ballcnt > 0) {
+            keyball.that_have_ball = true;
+            dprintf("keyball:rpc_get_info_invoke: found secondary trackball\n");
+            apply_ball_layout();
+        }
+#    endif
+        return;
+    }
+    if (TIMER_DIFF_32(now, last_sync) < KEYBALL_TX_GETINFO_INTERVAL) {
         return;
     }
     last_sync = now;
@@ -322,18 +361,7 @@ static void rpc_get_info_invoke(void) {
     dprintf("keyball:rpc_get_info_invoke: negotiated #%d %d\n", round, keyball.that_have_ball);
 
     // split keyboard negotiation completed.
-
-#    ifdef VIA_ENABLE
-    // adjust VIA layout options according to current combination.
-    uint8_t  layouts = (keyball.this_have_ball ? (is_keyboard_left() ? 0x02 : 0x01) : 0x00) | (keyball.that_have_ball ? (is_keyboard_left() ? 0x01 : 0x02) : 0x00);
-    uint32_t curr    = via_get_layout_options();
-    uint32_t next    = (curr & ~0x3) | layouts;
-    if (next != curr) {
-        via_set_layout_options(next);
-    }
-#    endif
-
-    keyball_on_adjust_layout(KEYBALL_ADJUST_PRIMARY);
+    apply_ball_layout();
 }
 
 static void rpc_get_motion_handler(uint8_t in_buflen, const void *in_data, uint8_t out_buflen, void *out_data) {
@@ -593,8 +621,38 @@ void keyboard_post_init_kb(void) {
     keyboard_post_init_user();
 }
 
-#if SPLIT_KEYBOARD
+#if KEYBALL_SENSOR_REDETECT_INTERVAL > 0 && KEYBALL_MODEL != 46
+// redetect_sensor probes the optical sensor again while it is not detected,
+// so that a sensor which did not answer at boot becomes available without
+// re-plugging.
+static void redetect_sensor(void) {
+    static uint32_t last = 0;
+    uint32_t        now  = timer_read32();
+    if (keyball.this_have_ball || TIMER_DIFF_32(now, last) < KEYBALL_SENSOR_REDETECT_INTERVAL) {
+        return;
+    }
+    last = now;
+    // Check the product ID (0x42) before pmw3360_init(), which blocks for 50ms,
+    // because this runs periodically on the side without a trackball as well.
+    if (pmw3360_reg_read(pmw3360_Product_ID) != 0x42 || !pmw3360_init()) {
+        return;
+    }
+    setup_sensor();
+    keyball.this_have_ball = true;
+    dprintf("keyball:redetect_sensor: detected\n");
+#    ifdef SPLIT_KEYBOARD
+    if (is_keyboard_master() && keyball.that_enable) {
+        apply_ball_layout();
+    }
+#    endif
+}
+#endif
+
 void housekeeping_task_kb(void) {
+#if KEYBALL_SENSOR_REDETECT_INTERVAL > 0 && KEYBALL_MODEL != 46
+    redetect_sensor();
+#endif
+#if SPLIT_KEYBOARD
     if (is_keyboard_master()) {
         rpc_get_info_invoke();
         if (keyball.that_have_ball) {
@@ -602,8 +660,8 @@ void housekeeping_task_kb(void) {
             rpc_set_cpi_invoke();
         }
     }
-}
 #endif
+}
 
 static void pressing_keys_update(uint16_t keycode, keyrecord_t *record) {
     // Process only valid keycodes.
