@@ -189,6 +189,75 @@ static void apply_rgblight_defaults_once(void) {
 
 #endif
 
+// カーソルの加速。ボールを転がす速さに応じて移動量に倍率を掛け、ゆっくり動かしたときは
+// カーソルを細かく、速く動かしたときは遠くまで動かす (倍率は config.h の KEYBALL_ACCEL_*)。
+// 速さは X と Y を合わせた移動量から求めるので、斜めでも縦横と同じ倍率になる。
+// 1 に満たない端数は軸ごとに次へ持ち越す (0.5 倍でも 2 カウントで 1 動く)。
+// lib/keyball の keyball_on_apply_motion_to_mouse_move (weak) を置き換える。左右それぞれの
+// ボールの移動量が KEYBALL_REPORTMOUSE_INTERVAL (8ms) ごとに渡される (動いていなくても呼ばれる)。
+//
+// フラッシュの残りが少ないため、AVR で 32 ビットの割り算をしない単位に直して計算する
+// (コンパイル時に計算する)。倍率は 256 = 等倍。速さは 1 回の報告あたりの移動量の 16 倍。
+#define KEYBALL_ACCEL_MIN       ((uint16_t)(KEYBALL_ACCEL_MIN_FACTOR * 256L / 1000))
+#define KEYBALL_ACCEL_MAX       ((uint16_t)(KEYBALL_ACCEL_MAX_FACTOR * 256L / 1000))
+#define KEYBALL_ACCEL_THRESHOLD ((uint16_t)(KEYBALL_ACCEL_SPEED_THRESHOLD * 16L * KEYBALL_REPORTMOUSE_INTERVAL / 1000))
+#define KEYBALL_ACCEL_SPEED     ((uint16_t)(KEYBALL_ACCEL_SPEED_MAX * 16L * KEYBALL_REPORTMOUSE_INTERVAL / 1000))
+
+_Static_assert(KEYBALL_ACCEL_MIN <= 256 && KEYBALL_ACCEL_MAX >= 256, "KEYBALL_ACCEL_MIN_FACTOR <= 1000 <= KEYBALL_ACCEL_MAX_FACTOR");
+_Static_assert(0 < KEYBALL_ACCEL_THRESHOLD && KEYBALL_ACCEL_THRESHOLD < KEYBALL_ACCEL_SPEED, "0 < KEYBALL_ACCEL_SPEED_THRESHOLD < KEYBALL_ACCEL_SPEED_MAX");
+_Static_assert((256L - KEYBALL_ACCEL_MIN) * KEYBALL_ACCEL_THRESHOLD <= UINT16_MAX && (KEYBALL_ACCEL_MAX - 256L) * (KEYBALL_ACCEL_SPEED - KEYBALL_ACCEL_THRESHOLD) <= UINT16_MAX, "KEYBALL_ACCEL_* too large");
+
+typedef struct {
+    uint16_t speed;       // 速さの移動平均 (1 回の報告あたりの移動量の 16 倍)
+    uint8_t  remainder_x; // 1 に満たない端数 (256 = 1)
+    uint8_t  remainder_y;
+} keyball_accel_t;
+
+static uint16_t keyball_accel_factor(uint16_t speed) {
+    if (speed >= KEYBALL_ACCEL_SPEED) {
+        return KEYBALL_ACCEL_MAX;
+    }
+    if (speed <= KEYBALL_ACCEL_THRESHOLD) {
+        return KEYBALL_ACCEL_MIN + (uint16_t)(256 - KEYBALL_ACCEL_MIN) * speed / KEYBALL_ACCEL_THRESHOLD;
+    }
+    return 256 + (uint16_t)(KEYBALL_ACCEL_MAX - 256) * (speed - KEYBALL_ACCEL_THRESHOLD) / (KEYBALL_ACCEL_SPEED - KEYBALL_ACCEL_THRESHOLD);
+}
+
+static int8_t keyball_accel_apply(int16_t v, uint16_t factor, uint8_t *remainder) {
+    int32_t total = (int32_t)v * factor + *remainder;
+    int32_t out   = total >> 8; // 端数は切り捨て、下位 8 ビットを次へ持ち越す
+    *remainder    = (uint8_t)total;
+    return out < -127 ? -127 : out > 127 ? 127 : (int8_t)out;
+}
+
+void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *r, bool is_left) {
+    static keyball_accel_t accel[2];
+    keyball_accel_t       *a = &accel[is_left ? 1 : 0];
+
+    // 向きは lib/keyball の既定 (Keyball39) と同じ
+    int16_t x = m->y;
+    int16_t y = m->x;
+    if (is_left) {
+        x = -x;
+        y = -y;
+    }
+    m->x = 0;
+    m->y = 0;
+
+    // 移動量 √(x² + y²) を「大きいほう + 小さいほうの半分」で近似する (誤差 12% 以内)
+    uint16_t ax       = x < 0 ? -x : x;
+    uint16_t ay       = y < 0 ? -y : y;
+    uint16_t distance = ax > ay ? ax + ay / 2 : ay + ax / 2;
+    if (distance > 1023) {
+        distance = 1023;
+    }
+    a->speed = (a->speed + distance * 16) / 2;
+
+    uint16_t factor = keyball_accel_factor(a->speed);
+    r->x            = keyball_accel_apply(x, factor, &a->remainder_x);
+    r->y            = keyball_accel_apply(y, factor, &a->remainder_y);
+}
+
 #ifdef VIA_ENABLE
 
 // 検査ツール (zmk-config-keyboards の tools/keyboard-check.cmd) が読む、読み取り専用の VIA コマンド。
