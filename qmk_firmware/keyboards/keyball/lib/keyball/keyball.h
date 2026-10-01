@@ -49,6 +49,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #    define KEYBALL_SCROLLSNAP_TENSION_THRESHOLD 12
 #endif
 
+/// Interval (ms) to probe the optical sensor again while it is not detected.
+/// A sensor which did not answer at boot (e.g. loose contact of the ball
+/// board) becomes available without re-plugging.  Define 0 in your config.h
+/// to probe only at boot.  Ignored on Keyball46, whose layout depends on the
+/// ball detected at boot.
+#ifndef KEYBALL_SENSOR_REDETECT_INTERVAL
+#    define KEYBALL_SENSOR_REDETECT_INTERVAL 2000
+#endif
+
+/// Interval (ms) to ask the secondary side for its trackball again, while the
+/// negotiation has completed without finding it (e.g. the secondary booted
+/// too late behind a Keyboard Quantizer, or detected its sensor later).
+/// Define 0 in your config.h to negotiate only at boot.
+#ifndef KEYBALL_TX_GETINFO_RETRY_INTERVAL
+#    define KEYBALL_TX_GETINFO_RETRY_INTERVAL 2000
+#endif
+
 /// Specify SROM ID to be uploaded PMW3360DW (optical sensor).  It will be
 /// enabled high CPI setting or so.  Valid valus are 0x04 or 0x81.  Define this
 /// in your config.h to be enable.  Please note that using this option will

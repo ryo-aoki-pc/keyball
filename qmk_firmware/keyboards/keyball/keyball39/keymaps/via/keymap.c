@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quantum.h"
 
+#ifdef RGBLIGHT_ENABLE
+#    include "version.h"
+#endif
+
 // Keyboard Quantizer Mini (vial-qmk-kq-mini) 併用前提のキーマップ。
 // MT/LT・記号・Vim レイヤーはすべて kq-mini 側 (LisM キーマップの EEPROM
 // デフォルト) が処理するため、ベースレイヤーは LisM の BASE 配列に対応する
@@ -132,13 +136,6 @@ bool is_mouse_record_user(uint16_t keycode, keyrecord_t *record) {
          layer_state_is(get_auto_mouse_layer());
 }
 
-void keyboard_post_init_user(void) {
-  set_auto_mouse_enable(true);
-  set_auto_mouse_timeout(AUTO_MOUSE_TIME);
-  // スクロールを上下左右フリー方向にする（既定の縦固定を解除）
-  keyball_set_scrollsnap_mode(KEYBALL_SCROLLSNAP_MODE_FREE);
-}
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed && layer_state_is(get_auto_mouse_layer()) &&
       !is_keyball_aml_excluded_key(record) &&
@@ -150,6 +147,45 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 #endif
+
+#ifdef RGBLIGHT_ENABLE
+
+// LED の設定は左右の Pro Micro に別々に保存され、USB 側の設定が左右に使われる。
+// config.h の RGBLIGHT_DEFAULT_* を新しいファームの初回起動時に保存し、同じ
+// ファームを書いた左右で揃える。適用済みのビルドはビルド日時のハッシュを
+// EEPROM の user 領域に記録して判定する (それ以降に VIA で変えた設定は、次に
+// ファームを書き込むまで保持される)。
+static uint32_t build_stamp(void) {
+  uint32_t hash = 2166136261UL; // FNV-1a
+  for (const char *p = QMK_BUILDDATE; *p != '\0'; p++) {
+    hash = (hash ^ (uint8_t)*p) * 16777619UL;
+  }
+  return hash;
+}
+
+static void apply_rgblight_defaults_once(void) {
+  uint32_t stamp = build_stamp();
+  if (eeconfig_read_user() == stamp) {
+    return;
+  }
+  eeconfig_update_rgblight_default();
+  rgblight_reload_from_eeprom();
+  eeconfig_update_user(stamp);
+}
+
+#endif
+
+void keyboard_post_init_user(void) {
+#ifdef RGBLIGHT_ENABLE
+  apply_rgblight_defaults_once();
+#endif
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+  set_auto_mouse_enable(true);
+  set_auto_mouse_timeout(AUTO_MOUSE_TIME);
+#endif
+  // スクロールを上下左右フリー方向にする（既定の縦固定を解除）
+  keyball_set_scrollsnap_mode(KEYBALL_SCROLLSNAP_MODE_FREE);
+}
 
 layer_state_t layer_state_set_user(layer_state_t state) {
     // スクロールレイヤーが最上位のときだけボールをスクロールモードにする

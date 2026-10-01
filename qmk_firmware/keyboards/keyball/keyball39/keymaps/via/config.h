@@ -31,6 +31,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#    define RGBLIGHT_EFFECT_RGB_TEST
 //#    define RGBLIGHT_EFFECT_ALTERNATING
 //#    define RGBLIGHT_EFFECT_TWINKLE
+
+// LED の設定 (左右共通)。左右の Pro Micro は LED の設定をそれぞれの EEPROM に
+// 保存しているため、新しいファームの初回起動時にこの値を左右それぞれへ保存して
+// 揃える (keymap.c の apply_rgblight_defaults_once())。
+// 青 (色相 170) から始まる虹色の静止グラデーション、明るさは
+// RGBLIGHT_LIMIT_VAL (150) の約 50%。
+#    define RGBLIGHT_DEFAULT_MODE RGBLIGHT_MODE_STATIC_GRADIENT
+#    define RGBLIGHT_DEFAULT_HUE 170
+#    define RGBLIGHT_DEFAULT_SAT 255
+#    define RGBLIGHT_DEFAULT_VAL 75
+#    define RGBLIGHT_DEFAULT_SPD 0
 #endif
 
 #define SPLIT_USB_TIMEOUT 2500
