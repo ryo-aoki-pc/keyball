@@ -274,6 +274,8 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
 //     [18] layer_state  [19-22] eeconfig_read_kb()  [23-26] eeconfig_read_user()
 //     [27] KEYBALL_CPI_DEFAULT / 100  [28] KEYBALL_SCROLL_DIV_DEFAULT
 //   08 00 02: ファームのビルド日時 (QMK_BUILDDATE、ASCII)
+//   08 00 03: カーソルの加速。[3-4] KEYBALL_ACCEL_MIN_FACTOR  [5-6] MAX_FACTOR  [7-8] SPEED_THRESHOLD
+//             [9-10] SPEED_MAX  [11] KEYBALL_REPORTMOUSE_INTERVAL (ms)
 // 設定を変えるコマンド (08 以外、チャンネル 0 の 07 / 09) は受け付けず、id_unhandled を返す。
 // 0.22.14 の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
 
@@ -335,6 +337,15 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
         case 0x02:
             memset(v, 0, length - 3);
             strncpy((char *)v, QMK_BUILDDATE, length - 4);
+            break;
+        case 0x03:
+            // カーソルの加速 (config.h の KEYBALL_ACCEL_*)
+            memset(v, 0, length - 3);
+            put_be16(&v[0], KEYBALL_ACCEL_MIN_FACTOR);
+            put_be16(&v[2], KEYBALL_ACCEL_MAX_FACTOR);
+            put_be16(&v[4], KEYBALL_ACCEL_SPEED_THRESHOLD);
+            put_be16(&v[6], KEYBALL_ACCEL_SPEED_MAX);
+            v[8] = KEYBALL_REPORTMOUSE_INTERVAL;
             break;
         default:
             data[0] = id_unhandled;

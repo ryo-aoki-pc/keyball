@@ -32,6 +32,7 @@ VIA コマンドを持つ。これらは EEPROM と起動時の処理で決ま�
 | --- | --- |
 | `08 00 01` | 状態。`[3]` 形式 (1)、`[4]` 機種、`[5]` フラグ、`[6]` CPI (100 単位)、`[7]` EEPROM の CPI、`[8]` スクロール除数、`[9]` EEPROM のスクロール除数、`[10]` スクロールスナップ、`[11]` AML のレイヤー、`[12-13]` AML のタイムアウト (ms)、`[14-15]` `AUTO_MOUSE_DELAY`、`[16]` AML のデバウンス、`[17]` スクロールレイヤー、`[18]` `layer_state`、`[19-22]` `eeconfig_read_kb()`、`[23-26]` `eeconfig_read_user()`、`[27]` `KEYBALL_CPI_DEFAULT / 100`、`[28]` `KEYBALL_SCROLL_DIV_DEFAULT` |
 | `08 00 02` | ファームのビルド日時 (`QMK_BUILDDATE`、ASCII) |
+| `08 00 03` | カーソルの加速 (`config.h` の `KEYBALL_ACCEL_*`)。`[3-4]` `MIN_FACTOR`、`[5-6]` `MAX_FACTOR`、`[7-8]` `SPEED_THRESHOLD`、`[9-10]` `SPEED_MAX`、`[11]` `KEYBALL_REPORTMOUSE_INTERVAL` (ms) |
 
 - 要求と応答は VIA の raw HID (32 バイト)。複数バイトの値はビッグエンディアン
 - フラグ: bit0 USB 側にボール、bit1 反対側と通信できる、bit2 反対側にボール、bit3 USB 側が左、
