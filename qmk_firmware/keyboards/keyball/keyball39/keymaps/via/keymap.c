@@ -184,6 +184,74 @@ static void apply_rgblight_defaults_once(void) {
 
 #endif
 
+// カーソルの加速。ボールを転がす速さに応じて移動量に倍率を掛け、ゆっくり動かしたときは
+// カーソルを細かく、速く動かしたときは遠くまで動かす (倍率は config.h の KEYBALL_ACCEL_*)。
+// 速さは X と Y を合わせた移動量から求めるので、斜めでも縦横と同じ倍率になる。
+// 1 に満たない端数は軸ごとに次へ持ち越す (0.5 倍でも 2 カウントで 1 動く)。
+// lib/keyball の keyball_on_apply_motion_to_mouse_move (weak) を置き換える。左右それぞれの
+// ボールの移動量が KEYBALL_REPORTMOUSE_INTERVAL (8ms) ごとに渡される (動いていなくても呼ばれる)。
+
+typedef struct {
+    uint32_t last;        // 前に呼ばれた時刻
+    uint16_t speed;       // 速さの移動平均 (カウント/秒)
+    int16_t  remainder_x; // 1 に満たない端数 (1000 = 1)
+    int16_t  remainder_y;
+} keyball_accel_t;
+
+static uint16_t keyball_accel_factor(uint32_t speed) {
+    if (speed >= KEYBALL_ACCEL_SPEED_MAX) {
+        return KEYBALL_ACCEL_MAX_FACTOR;
+    }
+    if (speed <= KEYBALL_ACCEL_SPEED_THRESHOLD) {
+        return KEYBALL_ACCEL_MIN_FACTOR + (uint32_t)(1000 - KEYBALL_ACCEL_MIN_FACTOR) * speed / KEYBALL_ACCEL_SPEED_THRESHOLD;
+    }
+    return 1000 + (uint32_t)(KEYBALL_ACCEL_MAX_FACTOR - 1000) * (speed - KEYBALL_ACCEL_SPEED_THRESHOLD) / (KEYBALL_ACCEL_SPEED_MAX - KEYBALL_ACCEL_SPEED_THRESHOLD);
+}
+
+static int8_t keyball_accel_apply(int16_t v, uint16_t factor, int16_t *remainder) {
+    int32_t total = (int32_t)v * factor + *remainder;
+    int32_t out   = total / 1000;
+    *remainder    = total - out * 1000;
+    return out < -127 ? -127 : out > 127 ? 127 : (int8_t)out;
+}
+
+void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *r, bool is_left) {
+    static keyball_accel_t accel[2];
+    keyball_accel_t       *a = &accel[is_left ? 1 : 0];
+
+    // 向きは lib/keyball の既定 (Keyball39) と同じ
+    int16_t x = m->y;
+    int16_t y = m->x;
+    if (is_left) {
+        x = -x;
+        y = -y;
+    }
+    m->x = 0;
+    m->y = 0;
+
+    uint32_t now = timer_read32();
+    uint32_t dt  = TIMER_DIFF_32(now, a->last);
+    a->last      = now;
+    if (dt == 0) {
+        dt = 1;
+    } else if (dt > 50) {
+        // 久しぶりに呼ばれた (起動直後など)。前の速さは引き継がない
+        a->speed = 0;
+        dt       = 50;
+    }
+
+    // 移動量 √(x² + y²) を「大きいほう + 小さいほうの半分」で近似する (誤差 12% 以内)
+    uint16_t ax       = x < 0 ? -x : x;
+    uint16_t ay       = y < 0 ? -y : y;
+    uint32_t distance = ax > ay ? ax + ay / 2 : ay + ax / 2;
+    uint32_t speed    = ((uint32_t)a->speed + distance * 1000 / dt) / 2;
+    a->speed          = speed > UINT16_MAX ? UINT16_MAX : speed;
+
+    uint16_t factor = keyball_accel_factor(a->speed);
+    r->x            = keyball_accel_apply(x, factor, &a->remainder_x);
+    r->y            = keyball_accel_apply(y, factor, &a->remainder_y);
+}
+
 void keyboard_post_init_user(void) {
 #ifdef RGBLIGHT_ENABLE
   apply_rgblight_defaults_once();

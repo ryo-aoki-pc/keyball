@@ -69,6 +69,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // カーソル速度 (CPI) には影響しない。
 #define KEYBALL_SCROLL_DIV_DEFAULT 5
 
+// カーソルの加速 (keymap.c の keyball_on_apply_motion_to_mouse_move)。ZMK の各キーボードの
+// trackball_accel (zmk-input-processor-xy-accel) と同じ値。ボールを転がす速さ (カウント/秒) に
+// 応じて移動量に倍率 (1000 = 等倍) を掛ける。速さ 0 で MIN_FACTOR、SPEED_THRESHOLD で 1000、
+// SPEED_MAX 以上で MAX_FACTOR になり、その間は直線で補間する。
+// ゆっくり動かしたときに遅すぎれば MIN_FACTOR を上げ、Windows の「ポインターの精度を高める」と
+// 重なって速く動かしたときに飛びすぎれば MAX_FACTOR を下げる (1000 で加速なし)。
+// 速さは CPI によって変わる (既定の 500 CPI より上げると、同じ転がし方でも速さが大きくなる)。
+#define KEYBALL_ACCEL_MIN_FACTOR 500
+#define KEYBALL_ACCEL_MAX_FACTOR 1300
+#define KEYBALL_ACCEL_SPEED_THRESHOLD 1000
+#define KEYBALL_ACCEL_SPEED_MAX 4000
+
 // Bootmagic Lite: キーを押したまま USB を挿すと EEPROM を消してブートローダに入る。
 // VIA_ENABLE が BOOTMAGIC_ENABLE を自動で有効にするため、左手側は既定の (0, 0) =
 // Q で既に動く。右手側も同じ外側上段のキー P (R00 = row 4, col 0) で入れるようにする
