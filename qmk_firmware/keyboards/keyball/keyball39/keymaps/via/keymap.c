@@ -20,8 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quantum.h"
 
-#ifdef RGBLIGHT_ENABLE
+#if defined(RGBLIGHT_ENABLE) || defined(VIA_ENABLE)
 #    include "version.h"
+#endif
+
+#ifdef VIA_ENABLE
+#    include <string.h>
+#    include "via.h"
 #endif
 
 // Keyboard Quantizer Mini (vial-qmk-kq-mini) 併用前提のキーマップ。
@@ -180,6 +185,92 @@ static void apply_rgblight_defaults_once(void) {
   eeconfig_update_rgblight_default();
   rgblight_reload_from_eeprom();
   eeconfig_update_user(stamp);
+}
+
+#endif
+
+#ifdef VIA_ENABLE
+
+// 検査ツール (zmk-config-keyboards の tools/keyboard-check.cmd) が読む、読み取り専用の VIA コマンド。
+// CPI・スクロールの倍率・AML の設定は EEPROM や起動時の処理で決まり、VIA のキーマップの読み出しでは
+// 分からないため、id_custom_get_value (0x08) のチャンネル 0 (id_custom_channel) で返す。
+//   08 00 01: 状態。応答の [3] 以降 (複数バイトの値はビッグエンディアン)
+//     [3] 形式 (1)  [4] KEYBALL_MODEL  [5] フラグ (bit0 USB 側にボール / bit1 反対側と通信できる /
+//         bit2 反対側にボール / bit3 USB 側が左 / bit4 USB 側がマスター / bit5 スクロールモード /
+//         bit6 AML 有効 / bit7 AML トグル中)
+//     [6] CPI (100 単位、keyball_get_cpi)  [7] EEPROM の CPI (0 = 既定)
+//     [8] スクロール除数 (keyball_get_scroll_div)  [9] EEPROM のスクロール除数 (0 = 既定)
+//     [10] スクロールスナップ  [11] AML のレイヤー  [12-13] AML のタイムアウト (ms)
+//     [14-15] AUTO_MOUSE_DELAY (ms)  [16] AML のデバウンス (ms)  [17] スクロールレイヤー
+//     [18] layer_state  [19-22] eeconfig_read_kb()  [23-26] eeconfig_read_user()
+//     [27] KEYBALL_CPI_DEFAULT / 100  [28] KEYBALL_SCROLL_DIV_DEFAULT
+//   08 00 02: ファームのビルド日時 (QMK_BUILDDATE、ASCII)
+// 設定を変えるコマンド (08 以外、チャンネル 0 の 07 / 09) は受け付けず、id_unhandled を返す。
+// 0.22.14 の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
+
+#    define KEYBALL_VIA_STATUS_FORMAT 1
+
+static void put_be16(uint8_t *p, uint16_t v) {
+    p[0] = v >> 8;
+    p[1] = v & 0xFF;
+}
+
+static void put_be32(uint8_t *p, uint32_t v) {
+    put_be16(&p[0], v >> 16);
+    put_be16(&p[2], v & 0xFFFF);
+}
+
+void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
+    // data = [ command_id, channel_id, value_id, value_data... ]
+    if (data[0] != id_custom_get_value || data[1] != id_custom_channel || length < 32) {
+        data[0] = id_unhandled;
+        return;
+    }
+    uint8_t *v = &data[3];
+    switch (data[2]) {
+        case 0x01: {
+            memset(v, 0, length - 3);
+            uint8_t flags = 0;
+            if (keyball.this_have_ball) flags |= 0x01;
+            if (keyball.that_enable) flags |= 0x02;
+            if (keyball.that_have_ball) flags |= 0x04;
+            if (is_keyboard_left()) flags |= 0x08;
+            if (is_keyboard_master()) flags |= 0x10;
+            if (keyball_get_scroll_mode()) flags |= 0x20;
+#    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+            if (get_auto_mouse_enable()) flags |= 0x40;
+            if (get_auto_mouse_toggle()) flags |= 0x80;
+#    endif
+            v[0] = KEYBALL_VIA_STATUS_FORMAT;
+            v[1] = KEYBALL_MODEL;
+            v[2] = flags;
+            v[3] = keyball_get_cpi();
+            v[4] = keyball.cpi_value;
+            v[5] = keyball_get_scroll_div();
+            v[6] = keyball.scroll_div;
+            v[7] = keyball_get_scrollsnap_mode();
+#    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+            v[8] = get_auto_mouse_layer();
+            put_be16(&v[9], get_auto_mouse_timeout());
+            put_be16(&v[11], AUTO_MOUSE_DELAY);
+            v[13] = get_auto_mouse_debounce();
+#    endif
+            v[14] = KEYBALL_SCROLL_LAYER;
+            v[15] = (uint8_t)layer_state;
+            put_be32(&v[16], eeconfig_read_kb());
+            put_be32(&v[20], eeconfig_read_user());
+            v[24] = KEYBALL_CPI_DEFAULT / 100;
+            v[25] = KEYBALL_SCROLL_DIV_DEFAULT;
+            break;
+        }
+        case 0x02:
+            memset(v, 0, length - 3);
+            strncpy((char *)v, QMK_BUILDDATE, length - 4);
+            break;
+        default:
+            data[0] = id_unhandled;
+            break;
+    }
 }
 
 #endif
