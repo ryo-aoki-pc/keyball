@@ -7,6 +7,12 @@
 #
 # ビルド結果: workflow 実行ページ下部の Artifacts から
 #             keyball39-via-firmware (zip) をダウンロードして .hex を書き込む
+#
+# custom ブランチのビルド結果は、固定タグ firmware-latest のプレリリースにも置く
+# (publish ジョブ)。次の URL から認証なしで取得でき、Artifacts と違って期限切れにならない:
+#   https://github.com/<owner>/<repo>/releases/download/firmware-latest/keyball_keyball39_via.hex
+#   https://github.com/<owner>/<repo>/releases/download/firmware-latest/BUILD_INFO.txt
+# zmk-config-keyboards の tools/flash-keyball.cmd はここから最新版を取得して書き込む。
 
 name: Build Keyball39 VIA firmware
 
@@ -55,3 +61,48 @@ jobs:
           cut -c 2,3 $f | awk '{s+=strtonum("0x" $1)}END{printf "%5d/28672 (%2d%%, %5d bytes free) ",s,s*100/28672,28672-s}'
           echo $f
         done
+
+  publish:
+    name: Publish firmware-latest
+    if: github.ref == 'refs/heads/custom'
+    runs-on: ubuntu-22.04
+    needs:
+    - build
+    permissions:
+      contents: write
+    concurrency:
+      group: firmware-latest
+      cancel-in-progress: false
+
+    steps:
+
+    - uses: actions/download-artifact@v6
+      with:
+        name: keyball39-via-firmware
+
+    - name: Write BUILD_INFO.txt
+      run: |
+        {
+          echo "repository: ${GITHUB_REPOSITORY}"
+          echo "branch: ${GITHUB_REF_NAME}"
+          echo "commit: ${GITHUB_SHA}"
+          echo "built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        } > BUILD_INFO.txt
+        cat BUILD_INFO.txt
+        ls -l keyball_keyball39_via.hex
+
+    # タグごと作り直して、タグが常にこのビルドのコミットを指すようにする。
+    # プレリリースなので releases/latest や v* タグのリリース (release.yml) には影響しない。
+    - name: Replace firmware-latest release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        gh release delete firmware-latest --cleanup-tag --yes || true
+        gh release create firmware-latest \
+          --target "${GITHUB_SHA}" \
+          --prerelease \
+          --title "Latest firmware (${GITHUB_REF_NAME} @ ${GITHUB_SHA::7})" \
+          --notes "custom ブランチの最新ビルド (keyball39:via)。push のたびに自動で置き換わります。詳細は BUILD_INFO.txt を参照。" \
+          keyball_keyball39_via.hex BUILD_INFO.txt
