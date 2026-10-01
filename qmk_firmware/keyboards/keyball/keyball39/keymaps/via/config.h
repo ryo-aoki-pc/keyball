@@ -57,3 +57,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // スクロール速度を 1 段階遅くする (1/8 -> 1/16)。値が大きいほど遅い (範囲 1-7)。
 // カーソル速度 (CPI) には影響しない。
 #define KEYBALL_SCROLL_DIV_DEFAULT 5
+
+// Bootmagic Lite: キーを押したまま USB を挿すと EEPROM を消してブートローダに入る。
+// VIA_ENABLE が BOOTMAGIC_ENABLE を自動で有効にするため、左手側は既定の (0, 0) =
+// Q で既に動く。右手側も同じ外側上段のキー P (R00 = row 4, col 0) で入れるようにする
+// (未定義だと右手側を USB につないだときも row 0 = 左手側の行を見てしまう)。
+// KQ-mini 経由ではなく PC に直結して挿すこと (caterina は KQ-mini を通らない)。
+#define BOOTMAGIC_LITE_ROW_RIGHT    4
+#define BOOTMAGIC_LITE_COLUMN_RIGHT 0
