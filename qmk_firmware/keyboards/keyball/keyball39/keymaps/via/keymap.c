@@ -190,28 +190,38 @@ static void apply_rgblight_defaults_once(void) {
 // 1 に満たない端数は軸ごとに次へ持ち越す (0.5 倍でも 2 カウントで 1 動く)。
 // lib/keyball の keyball_on_apply_motion_to_mouse_move (weak) を置き換える。左右それぞれの
 // ボールの移動量が KEYBALL_REPORTMOUSE_INTERVAL (8ms) ごとに渡される (動いていなくても呼ばれる)。
+//
+// フラッシュの残りが少ないため、AVR で 32 ビットの割り算をしない単位に直して計算する
+// (コンパイル時に計算する)。倍率は 256 = 等倍。速さは 1 回の報告あたりの移動量の 16 倍。
+#define KEYBALL_ACCEL_MIN       ((uint16_t)(KEYBALL_ACCEL_MIN_FACTOR * 256L / 1000))
+#define KEYBALL_ACCEL_MAX       ((uint16_t)(KEYBALL_ACCEL_MAX_FACTOR * 256L / 1000))
+#define KEYBALL_ACCEL_THRESHOLD ((uint16_t)(KEYBALL_ACCEL_SPEED_THRESHOLD * 16L * KEYBALL_REPORTMOUSE_INTERVAL / 1000))
+#define KEYBALL_ACCEL_SPEED     ((uint16_t)(KEYBALL_ACCEL_SPEED_MAX * 16L * KEYBALL_REPORTMOUSE_INTERVAL / 1000))
+
+_Static_assert(KEYBALL_ACCEL_MIN <= 256 && KEYBALL_ACCEL_MAX >= 256, "KEYBALL_ACCEL_MIN_FACTOR <= 1000 <= KEYBALL_ACCEL_MAX_FACTOR");
+_Static_assert(0 < KEYBALL_ACCEL_THRESHOLD && KEYBALL_ACCEL_THRESHOLD < KEYBALL_ACCEL_SPEED, "0 < KEYBALL_ACCEL_SPEED_THRESHOLD < KEYBALL_ACCEL_SPEED_MAX");
+_Static_assert((256L - KEYBALL_ACCEL_MIN) * KEYBALL_ACCEL_THRESHOLD <= UINT16_MAX && (KEYBALL_ACCEL_MAX - 256L) * (KEYBALL_ACCEL_SPEED - KEYBALL_ACCEL_THRESHOLD) <= UINT16_MAX, "KEYBALL_ACCEL_* too large");
 
 typedef struct {
-    uint32_t last;        // 前に呼ばれた時刻
-    uint16_t speed;       // 速さの移動平均 (カウント/秒)
-    int16_t  remainder_x; // 1 に満たない端数 (1000 = 1)
-    int16_t  remainder_y;
+    uint16_t speed;       // 速さの移動平均 (1 回の報告あたりの移動量の 16 倍)
+    uint8_t  remainder_x; // 1 に満たない端数 (256 = 1)
+    uint8_t  remainder_y;
 } keyball_accel_t;
 
-static uint16_t keyball_accel_factor(uint32_t speed) {
-    if (speed >= KEYBALL_ACCEL_SPEED_MAX) {
-        return KEYBALL_ACCEL_MAX_FACTOR;
+static uint16_t keyball_accel_factor(uint16_t speed) {
+    if (speed >= KEYBALL_ACCEL_SPEED) {
+        return KEYBALL_ACCEL_MAX;
     }
-    if (speed <= KEYBALL_ACCEL_SPEED_THRESHOLD) {
-        return KEYBALL_ACCEL_MIN_FACTOR + (uint32_t)(1000 - KEYBALL_ACCEL_MIN_FACTOR) * speed / KEYBALL_ACCEL_SPEED_THRESHOLD;
+    if (speed <= KEYBALL_ACCEL_THRESHOLD) {
+        return KEYBALL_ACCEL_MIN + (uint16_t)(256 - KEYBALL_ACCEL_MIN) * speed / KEYBALL_ACCEL_THRESHOLD;
     }
-    return 1000 + (uint32_t)(KEYBALL_ACCEL_MAX_FACTOR - 1000) * (speed - KEYBALL_ACCEL_SPEED_THRESHOLD) / (KEYBALL_ACCEL_SPEED_MAX - KEYBALL_ACCEL_SPEED_THRESHOLD);
+    return 256 + (uint16_t)(KEYBALL_ACCEL_MAX - 256) * (speed - KEYBALL_ACCEL_THRESHOLD) / (KEYBALL_ACCEL_SPEED - KEYBALL_ACCEL_THRESHOLD);
 }
 
-static int8_t keyball_accel_apply(int16_t v, uint16_t factor, int16_t *remainder) {
+static int8_t keyball_accel_apply(int16_t v, uint16_t factor, uint8_t *remainder) {
     int32_t total = (int32_t)v * factor + *remainder;
-    int32_t out   = total / 1000;
-    *remainder    = total - out * 1000;
+    int32_t out   = total >> 8; // 端数は切り捨て、下位 8 ビットを次へ持ち越す
+    *remainder    = (uint8_t)total;
     return out < -127 ? -127 : out > 127 ? 127 : (int8_t)out;
 }
 
@@ -229,23 +239,14 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
     m->x = 0;
     m->y = 0;
 
-    uint32_t now = timer_read32();
-    uint32_t dt  = TIMER_DIFF_32(now, a->last);
-    a->last      = now;
-    if (dt == 0) {
-        dt = 1;
-    } else if (dt > 50) {
-        // 久しぶりに呼ばれた (起動直後など)。前の速さは引き継がない
-        a->speed = 0;
-        dt       = 50;
-    }
-
     // 移動量 √(x² + y²) を「大きいほう + 小さいほうの半分」で近似する (誤差 12% 以内)
     uint16_t ax       = x < 0 ? -x : x;
     uint16_t ay       = y < 0 ? -y : y;
-    uint32_t distance = ax > ay ? ax + ay / 2 : ay + ax / 2;
-    uint32_t speed    = ((uint32_t)a->speed + distance * 1000 / dt) / 2;
-    a->speed          = speed > UINT16_MAX ? UINT16_MAX : speed;
+    uint16_t distance = ax > ay ? ax + ay / 2 : ay + ax / 2;
+    if (distance > 1023) {
+        distance = 1023;
+    }
+    a->speed = (a->speed + distance * 16) / 2;
 
     uint16_t factor = keyball_accel_factor(a->speed);
     r->x            = keyball_accel_apply(x, factor, &a->remainder_x);

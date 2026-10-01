@@ -75,7 +75,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // SPEED_MAX 以上で MAX_FACTOR になり、その間は直線で補間する。
 // ゆっくり動かしたときに遅すぎれば MIN_FACTOR を上げ、Windows の「ポインターの精度を高める」と
 // 重なって速く動かしたときに飛びすぎれば MAX_FACTOR を下げる (1000 で加速なし)。
-// 速さは CPI によって変わる (既定の 500 CPI より上げると、同じ転がし方でも速さが大きくなる)。
+// 速さは 8ms ごと (KEYBALL_REPORTMOUSE_INTERVAL) の移動量から求める。CPI によって変わる
+// (既定の 500 CPI より上げると、同じ転がし方でも速さが大きくなる)。
 #define KEYBALL_ACCEL_MIN_FACTOR 500
 #define KEYBALL_ACCEL_MAX_FACTOR 1300
 #define KEYBALL_ACCEL_SPEED_THRESHOLD 1000
