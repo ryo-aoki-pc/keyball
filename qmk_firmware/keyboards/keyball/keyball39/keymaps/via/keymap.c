@@ -31,6 +31,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 割当に合わせる: &mo FUNC → Grave / &mo SYM → 右 Alt / &mo VIM_BASE → CapsLock。
 // kq-mini に含まれないマウスレイヤー (LisM の MOUSE_MOVE / MOUSE_SCROLL) は
 // 本体側のレイヤー 1 (AML) / 2 で再現する。
+// マウスレイヤーでは、kq-mini が mod-tap にする位置 (A = 左 Ctrl / - = 右 Ctrl /
+// Z = 左 Shift / / = 右 Shift) と、ベースの Win / Alt を素の修飾キーにする。
+// kq-mini は修飾キーをそのまま素通しし、AML も修飾キーでは解除されないため、
+// AML に入ってから Shift + クリックなどを押せる。
 
 // LisM の MOUSE_SCROLL に相当するスクロールレイヤー
 #define KEYBALL_SCROLL_LAYER 2
@@ -45,20 +49,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_GRV   , KC_LGUI  , KC_LALT  , KC_SPC   , KC_SPC   , KC_RALT  ,      KC_CAPS  , KC_ENT   , KC_NO    , KC_NO    , KC_GRV   , KC_GRV
   ),
 
-  // LisM MOUSE_MOVE 相当 (AML レイヤー): D / K でスクロールレイヤーへ
+  // LisM MOUSE_MOVE 相当 (AML レイヤー): D / K でスクロールレイヤーへ、
+  // A / - / Z / / / Win / Alt は修飾キー
   [1] = LAYOUT_universal(
     KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
-    KC_NO    , KC_NO    , MO(2)    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , MO(2)    , KC_NO    , KC_NO    ,
-    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
-    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
+    KC_LCTL  , KC_NO    , MO(2)    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , MO(2)    , KC_NO    , KC_RCTL  ,
+    KC_LSFT  , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_RSFT  ,
+    KC_NO    , KC_LGUI  , KC_LALT  , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
   ),
 
-  // LisM MOUSE_SCROLL 相当: ボールはスクロール、S/F/J/L=クリック、X/V/M/.=戻る/進む
+  // LisM MOUSE_SCROLL 相当: ボールはスクロール、S/F/J/L=クリック、X/V/M/.=戻る/進む、
+  // A / - / Z / / / Win / Alt は修飾キー
   [2] = LAYOUT_universal(
     KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
-    KC_NO    , KC_BTN2  , KC_NO    , KC_BTN1  , KC_NO    ,                            KC_NO    , KC_BTN1  , KC_NO    , KC_BTN2  , KC_NO    ,
-    KC_NO    , KC_BTN5  , KC_NO    , KC_BTN4  , KC_NO    ,                            KC_NO    , KC_BTN4  , KC_NO    , KC_BTN5  , KC_NO    ,
-    KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
+    KC_LCTL  , KC_BTN2  , KC_NO    , KC_BTN1  , KC_NO    ,                            KC_NO    , KC_BTN1  , KC_NO    , KC_BTN2  , KC_RCTL  ,
+    KC_LSFT  , KC_BTN5  , KC_NO    , KC_BTN4  , KC_NO    ,                            KC_NO    , KC_BTN4  , KC_NO    , KC_BTN5  , KC_RSFT  ,
+    KC_NO    , KC_LGUI  , KC_LALT  , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
   ),
 
   // 設定レイヤー (RGB / AML / スクロールスナップ / スクロール速度 / CPI)
@@ -74,7 +80,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 
 // AML 中も押下でデフォルトレイヤーに戻さない物理キー (LisM の
-// &zip_temp_layer excluded-positions = <12 17> = D / K に相当)。
+// &zip_temp_layer excluded-positions のうち 12 / 17 = D / K に相当)。
+// excluded-positions のほかの位置 (A / - / Z / / / Win / Alt) はマウスレイヤーで
+// 修飾キーを送るため、ここで位置を指定しなくても AML は解除されない (QMK の
+// process_auto_mouse() は修飾キーを無視し、is_auto_mouse_allowed_key() も許可する)。
 // keyball39.h の LAYOUT_no_ball で D = L12 (row 1, col 2)、
 // K = R12 (右手側は row 4〜7 で R1x が row 5、col 2)。
 #define KEYBALL_D_KEYPOS_ROW 1
