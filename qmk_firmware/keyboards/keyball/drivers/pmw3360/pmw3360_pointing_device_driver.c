@@ -20,9 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 bool pmw3360_has = false;
 
-void pointing_device_driver_init(void) {
+bool pointing_device_driver_init(void) {
     pmw3360_has = pmw3360_init();
     pmw3360_reg_write(pmw3360_Motion_Burst, 0);
+    return pmw3360_has;
 }
 
 #define constrain_hid(amt) ((amt) < -127 ? -127 : ((amt) > 127 ? 127 : (amt)))

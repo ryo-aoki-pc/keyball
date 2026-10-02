@@ -26,21 +26,8 @@ jobs:
       uses: ./.github/actions/release-archive
       with: { name: keyball39 }
 
-    - name: Archive Keyball44 firmwares
-      uses: ./.github/actions/release-archive
-      with: { name: keyball44 }
-
-    - name: Archive Keyball61 firmwares
-      uses: ./.github/actions/release-archive
-      with: { name: keyball61 }
-
-    - name: Archive Keyball46 firmwares
-      uses: ./.github/actions/release-archive
-      with: { name: keyball46 }
-
-    - name: Archive One47 firmwares
-      uses: ./.github/actions/release-archive
-      with: { name: one47 }
+    # keyball44 / keyball61 / keyball46 / one47 は QMK 0.34.6 に移植していないのでビルドしない
+    # (build-all.yml を参照)
 
     - name: List archives
       run: ls -l *.zip

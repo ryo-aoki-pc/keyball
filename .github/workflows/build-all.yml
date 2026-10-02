@@ -11,21 +11,14 @@ jobs:
 
     strategy:
       matrix:
-        keyboard: [ keyball39, keyball44, keyball61, keyball46, one47 ]
+        # QMK 0.34.6 に移植したのは keyball39 だけ。keyball44 / keyball61 / keyball46 / one47 は
+        # QMK 0.22.14 の API のままなのでビルドできない (移植するまで対象から外す)
+        keyboard: [ keyball39 ]
         keymap: [ test, default, via ]
-        include:
-          - keyboard: keyball46
-            keymap:   test_Left
-          - keyboard: keyball46
-            keymap:   test_Both
-          - keyboard: keyball46
-            keymap:   via_Left
-          - keyboard: keyball46
-            keymap:   via_Both
 
     uses: ./.github/workflows/build-firmware.yml
     with:
-      qmk_version: '0.22.14'
+      qmk_version: '0.34.6'
       keyboard:    ${{ matrix.keyboard }}
       keymap:      ${{ matrix.keymap }}
 
