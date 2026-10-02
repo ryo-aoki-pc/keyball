@@ -34,6 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // デフォルト) が処理するため、ベースレイヤーは LisM の BASE 配列に対応する
 // 素の HID コードを送るだけにする。レイヤーキーは lism.vialmap.json の
 // 割当に合わせる: &mo FUNC → Grave / &mo SYM → 右 Alt / &mo VIM_BASE → CapsLock。
+// LisM の左親指の空き (&none) に当たるキー (L33) は SPACE にする (kq-mini で
+// &lt VIM_BASE SPACE になる)。AroundFortyRB / KUKEY42 / roBa / torabo-tsuki-lp も同じ。
 // kq-mini に含まれないマウスレイヤー (LisM の MOUSE_MOVE / MOUSE_SCROLL) は
 // 本体側のレイヤー 1 (AML) / 2 で再現する。
 // AML レイヤーでは、修飾キーの位置 (kq-mini が mod-tap にする A = 左 Ctrl /
@@ -114,8 +116,9 @@ static bool is_auto_mouse_allowed_key(uint16_t keycode) {
     keycode &= 0xff;
   }
 
+  // KC_NO (空きキー) は含めない。ZMK の zip_temp_layer と同じく、除外位置 (D / K) 以外の
+  // キーを押したら、ボールが動いている間でも AML を解除する
   switch (keycode) {
-    case KC_NO:
     case KC_TRANSPARENT:
     case QK_MOUSE_BUTTON_1 ... QK_MOUSE_BUTTON_8:
     case SCRL_MO:
