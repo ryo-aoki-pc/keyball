@@ -156,8 +156,49 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       !is_keyball_aml_excluded_key(record) &&
       !is_auto_mouse_allowed_key(keycode)) {
     auto_mouse_reset_trigger(true);
+  } else if (!layer_state_is(get_auto_mouse_layer()) && IS_MODIFIER_KEYCODE(keycode)) {
+    // QMK (process_auto_mouse) は修飾キーでは AUTO_MOUSE_DELAY を数え直さない。Win / Alt と
+    // SYM の親指キー (右 Alt) を押した・離したときの振動でも AML にならないよう数え直す
+    // (ほかのキーと同じ。ZMK の aml_threshold もすべてのキーを数える)
+    auto_mouse_reset_trigger(record->event.pressed);
   }
 
+  return true;
+}
+
+// AML を発動するか (QMK の weak 関数 auto_mouse_activation を置き換える)。キー入力の振動などで
+// ボールがわずかに動いても AML にしないため、止まっていた状態から動いた量を X と Y それぞれ
+// 向き付きで足し (行ったり来たりする振動は打ち消し合う)、大きさ (大きいほう + 小さいほうの半分) が
+// KEYBALL_AML_THRESHOLD に達したときだけ発動する。KEYBALL_AML_IDLE_MS 以上動きが途切れたら
+// 数え直す。QMK はキーを押した・離したあと AUTO_MOUSE_DELAY の間この関数を呼ばないので、
+// その後は途切れていたとみなして 0 から数える。ZMK の aml_threshold と同じ判定。
+// AML 中とスクロール・ボタンは従来どおり (動けばタイムアウトを延ばす)。
+#define KEYBALL_AML_IDLE_MS 100
+
+bool auto_mouse_activation(report_mouse_t r) {
+  static int16_t  sum_x, sum_y;
+  static uint16_t last_move;
+
+  if (r.buttons || r.h || r.v || layer_state_is(get_auto_mouse_layer())) {
+    sum_x = sum_y = 0;
+    return r.x || r.y || r.h || r.v || r.buttons;
+  }
+  if (!r.x && !r.y) {
+    return false;
+  }
+  if (timer_elapsed(last_move) > KEYBALL_AML_IDLE_MS) {
+    sum_x = sum_y = 0;
+  }
+  last_move = timer_read();
+  // 1 回の報告は ±127 で、しきい値に達すると 0 に戻すので、あふれない
+  sum_x += r.x;
+  sum_y += r.y;
+  uint16_t ax = sum_x < 0 ? -sum_x : sum_x;
+  uint16_t ay = sum_y < 0 ? -sum_y : sum_y;
+  if ((ax > ay ? ax + ay / 2 : ay + ax / 2) < KEYBALL_AML_THRESHOLD) {
+    return false;
+  }
+  sum_x = sum_y = 0;
   return true;
 }
 
@@ -265,7 +306,7 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
 // CPI・スクロールの倍率・AML の設定は EEPROM や起動時の処理で決まり、VIA のキーマップの読み出しでは
 // 分からないため、id_custom_get_value (0x08) のチャンネル 0 (id_custom_channel) で返す。
 //   08 00 01: 状態。応答の [3] 以降 (複数バイトの値はビッグエンディアン)
-//     [3] 形式 (1)  [4] KEYBALL_MODEL  [5] フラグ (bit0 USB 側にボール / bit1 反対側と通信できる /
+//     [3] 形式 (2)  [4] KEYBALL_MODEL  [5] フラグ (bit0 USB 側にボール / bit1 反対側と通信できる /
 //         bit2 反対側にボール / bit3 USB 側が左 / bit4 USB 側がマスター / bit5 スクロールモード /
 //         bit6 AML 有効 / bit7 AML トグル中)
 //     [6] CPI (100 単位、keyball_get_cpi)  [7] EEPROM の CPI (0 = 既定)
@@ -274,13 +315,14 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
 //     [14-15] AUTO_MOUSE_DELAY (ms)  [16] AML のデバウンス (ms)  [17] スクロールレイヤー
 //     [18] layer_state  [19-22] eeconfig_read_kb()  [23-26] eeconfig_read_user()
 //     [27] KEYBALL_CPI_DEFAULT / 100  [28] KEYBALL_SCROLL_DIV_DEFAULT
+//     [29] KEYBALL_AML_THRESHOLD (AML の発動に要る動きの量。形式 2 から)
 //   08 00 02: ファームのビルド日時 (QMK_BUILDDATE、ASCII)
 //   08 00 03: カーソルの加速。[3-4] KEYBALL_ACCEL_MIN_FACTOR  [5-6] MAX_FACTOR  [7-8] SPEED_THRESHOLD
 //             [9-10] SPEED_MAX  [11] KEYBALL_REPORTMOUSE_INTERVAL (ms)
 // 設定を変えるコマンド (08 以外、チャンネル 0 の 07 / 09) は受け付けず、id_unhandled を返す。
 // 0.22.14 の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
 
-#    define KEYBALL_VIA_STATUS_FORMAT 1
+#    define KEYBALL_VIA_STATUS_FORMAT 2
 
 static void put_be16(uint8_t *p, uint16_t v) {
     p[0] = v >> 8;
@@ -333,6 +375,7 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
             put_be32(&v[20], eeconfig_read_user());
             v[24] = KEYBALL_CPI_DEFAULT / 100;
             v[25] = KEYBALL_SCROLL_DIV_DEFAULT;
+            v[26] = KEYBALL_AML_THRESHOLD;
             break;
         }
         case 0x02:
