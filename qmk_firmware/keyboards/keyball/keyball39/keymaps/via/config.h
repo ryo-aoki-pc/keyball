@@ -58,12 +58,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_MOUSE_DEFAULT_LAYER 1
 #define AUTO_MOUSE_TIME 10000
 
-// キー入力直後にボールを動かしても AML を発動させない猶予 (ms)。LisM の
-// &zip_temp_layer require-prior-idle-ms = <200> に対応する (QMK は押下だけでなく
-// 解放でもこのタイマーを再始動するため厳密には同一ではないが、値は同じ)。
+// キーを押した・離したあと、ボールを動かしても AML を発動させない猶予 (ms)。LisM の
+// &zip_temp_layer require-prior-idle-ms = <200> (aml_threshold がすべてのキーの押下と解放に使う) と同じ。
+// QMK は修飾キー (Win / Alt と、KQ-mini が SYM のレイヤーキーにする右 Alt) ではこのタイマーを
+// 再始動しないので、keymap.c の process_record_user() で再始動する。
 // QMK 0.22.14 の既定値 (GET_TAPPING_TERM(KC_MS_BTN1) = TAPPING_TERM = 200) と
-// 同じ値だが、TAPPING_TERM の変更に引きずられないよう明示しておく (挙動の変更はない)。
+// 同じ値だが、TAPPING_TERM の変更に引きずられないよう明示しておく。
 #define AUTO_MOUSE_DELAY 200
+
+// AML の発動に要るボールの動きの量 (keymap.c の auto_mouse_activation)。キー入力の振動などで
+// ボールがわずかに動いても AML にしないため、止まっていた状態から動いた量 (X と Y それぞれ向き付きで
+// 足すので、行ったり来たりする振動は打ち消し合う) の大きさ (大きいほう + 小さいほうの半分) が
+// この値 (加速の後の値 = カーソルの移動量) に達したときだけ発動する。ZMK の各キーボードの
+// aml_threshold (zmk-input-processor-aml-threshold) の threshold と同じ値。
+// まだ振動で AML になるなら上げ、少し動かしただけでは AML にならないなら下げる。
+#define KEYBALL_AML_THRESHOLD 10
 
 // スクロール速度を 1 段階遅くする (1/8 -> 1/16)。値が大きいほど遅い (範囲 1-7)。
 // カーソル速度 (CPI) には影響しない。
