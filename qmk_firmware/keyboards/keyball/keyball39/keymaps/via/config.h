@@ -62,7 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // &zip_temp_layer require-prior-idle-ms = <200> (aml_threshold がすべてのキーの押下と解放に使う) と同じ。
 // QMK は修飾キー (Win / Alt と、KQ-mini が SYM のレイヤーキーにする右 Alt) ではこのタイマーを
 // 再始動しないので、keymap.c の process_record_user() で再始動する。
-// QMK 0.22.14 の既定値 (GET_TAPPING_TERM(KC_MS_BTN1) = TAPPING_TERM = 200) と
+// QMK の既定値 (GET_TAPPING_TERM(QK_MOUSE_BUTTON_1) = TAPPING_TERM = 200) と
 // 同じ値だが、TAPPING_TERM の変更に引きずられないよう明示しておく。
 #define AUTO_MOUSE_DELAY 200
 
@@ -96,5 +96,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Q で既に動く。右手側も同じ外側上段のキー P (R00 = row 4, col 0) で入れるようにする
 // (未定義だと右手側を USB につないだときも row 0 = 左手側の行を見てしまう)。
 // KQ-mini 経由ではなく PC に直結して挿すこと (caterina は KQ-mini を通らない)。
-#define BOOTMAGIC_LITE_ROW_RIGHT    4
-#define BOOTMAGIC_LITE_COLUMN_RIGHT 0
+#define BOOTMAGIC_ROW_RIGHT    4
+#define BOOTMAGIC_COLUMN_RIGHT 0
+
+// RGB LED のドライバのバッファの LED の数 (keymap.c の rgblight_driver)。片手の LED は最大 24 個で、
+// rgblight は自分の側の LED を 0 から数えた番号で渡すので、片手分あればよい。
+#define WS2812_LED_COUNT 24

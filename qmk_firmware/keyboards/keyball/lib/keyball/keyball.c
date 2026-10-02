@@ -154,13 +154,16 @@ static void setup_sensor(void) {
     pmw3360_cpi_set(keyball_get_cpi() - 1);
 }
 
-void pointing_device_driver_init(void) {
+bool pointing_device_driver_init(void) {
 #if KEYBALL_MODEL != 46
     keyball.this_have_ball = pmw3360_init();
 #endif
     if (keyball.this_have_ball) {
         setup_sensor();
     }
+    // Always succeed: get_report must run on both halves (with or without a
+    // ball) to relay the other side's motion and to re-detect the sensor.
+    return true;
 }
 
 uint16_t pointing_device_driver_get_cpi(void) {
@@ -711,9 +714,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
     switch (keycode) {
 #ifndef MOUSEKEY_ENABLE
-        // process KC_MS_BTN1~8 by myself
+        // process MS_BTN1~8 by myself
         // See process_action() in quantum/action.c for details.
-        case KC_MS_BTN1 ... KC_MS_BTN8: {
+        case QK_MOUSE_BUTTON_1 ... QK_MOUSE_BUTTON_8: {
             extern void register_mouse(uint8_t mouse_keycode, bool pressed);
             register_mouse(keycode, record->event.pressed);
             // to apply QK_MODS actions, allow to process others.
@@ -818,15 +821,16 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 
 // Disable functions keycode_config() and mod_config() in keycode_config.c to
 // reduce size.  These functions are provided for customizing magic keycode.
-// These two functions are mostly unnecessary if `MAGIC_KEYCODE_ENABLE = no` is
-// set.
+// These two functions are mostly unnecessary if `MAGIC_ENABLE = no` is set.
 //
-// If `MAGIC_KEYCODE_ENABLE = no` and you want to keep these two functions as
-// they are, define the macro KEYBALL_KEEP_MAGIC_FUNCTIONS.
+// If `MAGIC_ENABLE = no` and you want to keep these two functions as they are,
+// define the macro KEYBALL_KEEP_MAGIC_FUNCTIONS.
 //
-// See: https://docs.qmk.fm/#/squeezing_avr?id=magic-functions
+// See: https://docs.qmk.fm/squeezing_avr#magic-functions
 //
-#if !defined(MAGIC_KEYCODE_ENABLE) && !defined(KEYBALL_KEEP_MAGIC_FUNCTIONS)
+// (QMK 0.22 defined MAGIC_KEYCODE_ENABLE for `MAGIC_ENABLE = yes`; newer QMK
+// defines MAGIC_ENABLE.)
+#if !defined(MAGIC_ENABLE) && !defined(MAGIC_KEYCODE_ENABLE) && !defined(KEYBALL_KEEP_MAGIC_FUNCTIONS)
 
 uint16_t keycode_config(uint16_t keycode) {
     return keycode;

@@ -69,16 +69,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // A / - / Z / / / Win / Alt は修飾キー
   [2] = LAYOUT_universal(
     KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,                            KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    ,
-    KC_LCTL  , KC_BTN2  , KC_NO    , KC_BTN1  , KC_NO    ,                            KC_NO    , KC_BTN1  , KC_NO    , KC_BTN2  , KC_RCTL  ,
-    KC_LSFT  , KC_BTN5  , KC_NO    , KC_BTN4  , KC_NO    ,                            KC_NO    , KC_BTN4  , KC_NO    , KC_BTN5  , KC_RSFT  ,
+    KC_LCTL  , MS_BTN2  , KC_NO    , MS_BTN1  , KC_NO    ,                            KC_NO    , MS_BTN1  , KC_NO    , MS_BTN2  , KC_RCTL  ,
+    KC_LSFT  , MS_BTN5  , KC_NO    , MS_BTN4  , KC_NO    ,                            KC_NO    , MS_BTN4  , KC_NO    , MS_BTN5  , KC_RSFT  ,
     KC_NO    , KC_LGUI  , KC_LALT  , KC_NO    , KC_NO    , KC_NO    ,      KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO    , KC_NO
   ),
 
   // 設定レイヤー (RGB / AML / スクロールスナップ / スクロール速度 / CPI)
   [3] = LAYOUT_universal(
-    RGB_TOG  , AML_TO   , AML_I50  , AML_D50  , _______  ,                            _______  , _______  , SSNP_HOR , SSNP_VRT , SSNP_FRE ,
-    RGB_MOD  , RGB_HUI  , RGB_SAI  , RGB_VAI  , SCRL_DVI ,                            _______  , _______  , _______  , _______  , _______  ,
-    RGB_RMOD , RGB_HUD  , RGB_SAD  , RGB_VAD  , SCRL_DVD ,                            CPI_D1K  , CPI_D100 , CPI_I100 , CPI_I1K  , KBC_SAVE ,
+    UG_TOGG  , AML_TO   , AML_I50  , AML_D50  , _______  ,                            _______  , _______  , SSNP_HOR , SSNP_VRT , SSNP_FRE ,
+    UG_NEXT  , UG_HUEU  , UG_SATU  , UG_VALU  , SCRL_DVI ,                            _______  , _______  , _______  , _______  , _______  ,
+    UG_PREV  , UG_HUED  , UG_SATD  , UG_VALD  , SCRL_DVD ,                            CPI_D1K  , CPI_D100 , CPI_I100 , CPI_I1K  , KBC_SAVE ,
     QK_BOOT  , KBC_RST  , _______  , _______  , _______  , _______  ,      _______  , _______  , _______  , _______  , KBC_RST  , QK_BOOT
   ),
 };
@@ -117,7 +117,7 @@ static bool is_auto_mouse_allowed_key(uint16_t keycode) {
   switch (keycode) {
     case KC_NO:
     case KC_TRANSPARENT:
-    case KC_MS_BTN1 ... KC_MS_BTN8:
+    case QK_MOUSE_BUTTON_1 ... QK_MOUSE_BUTTON_8:
     case SCRL_MO:
     case AML_TO:
     case AML_I50:
@@ -320,7 +320,7 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
 //   08 00 03: カーソルの加速。[3-4] KEYBALL_ACCEL_MIN_FACTOR  [5-6] MAX_FACTOR  [7-8] SPEED_THRESHOLD
 //             [9-10] SPEED_MAX  [11] KEYBALL_REPORTMOUSE_INTERVAL (ms)
 // 設定を変えるコマンド (08 以外、チャンネル 0 の 07 / 09) は受け付けず、id_unhandled を返す。
-// 0.22.14 の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
+// QMK の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
 
 #    define KEYBALL_VIA_STATUS_FORMAT 2
 
@@ -426,4 +426,28 @@ void oledkit_render_info_user(void) {
     keyball_oled_render_ballinfo();
     keyball_oled_render_layerinfo();
 }
+#endif
+
+#if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_CUSTOM)
+// RGB LED のドライバ (rules.mk の RGBLIGHT_DRIVER = custom)。QMK 0.27 以降の rgblight は、全体の
+// LED の番号を自分の側の番号に直す計算 (rgblight_led_index) で反対側の LED を範囲外の番号にして、
+// そのまま ws2812 のバッファの外に書き込んでしまう (qmk/qmk_firmware#26480。右手側では
+// pointing_device や USB の状態などの RAM を壊す)。範囲外の番号は捨ててから書き込む。
+// バッファは片手分 (config.h の WS2812_LED_COUNT) にするので、1 回に送る LED も 0.22.14 と同じく
+// 片手分で、送っている間 (割り込み禁止) の時間も延びない。
+#    include "ws2812.h"
+#    include "rgblight_drivers.h"
+
+static void keyball_ws2812_set_color(int index, uint8_t r, uint8_t g, uint8_t b) {
+    if ((unsigned)index < WS2812_LED_COUNT) {
+        ws2812_set_color(index, r, g, b);
+    }
+}
+
+const rgblight_driver_t rgblight_driver = {
+    .init          = ws2812_init,
+    .set_color     = keyball_ws2812_set_color,
+    .set_color_all = ws2812_set_color_all,
+    .flush         = ws2812_flush,
+};
 #endif

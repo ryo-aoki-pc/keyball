@@ -27,10 +27,12 @@ See each directories for each keyboards in a table above.
 2. Check out [qmk/qmk_firmware](https://github.com/qmk/qmk_firmware/) repository in another place.
 
     ```console
-    $ git clone https://github.com/qmk/qmk_firmware.git --depth 1 --recurse-submodules --shallow-submodules -b 0.22.14 qmk
+    $ git clone https://github.com/qmk/qmk_firmware.git --depth 1 --recurse-submodules --shallow-submodules -b 0.34.6 qmk
     ```
 
-    Currently Keyball firmwares are verified to compile with QMK 0.22.14
+    Currently Keyball firmwares are verified to compile with QMK 0.34.6
+    (in this fork, only Keyball39 has been ported to QMK 0.34.6; the other
+    boards still need QMK 0.22.14 and are not built by CI).
 
 3. Create a symbolic link to this `keyball/` directory from [qmk/qmk_firmware]'s `keyboards/` directory.
 
