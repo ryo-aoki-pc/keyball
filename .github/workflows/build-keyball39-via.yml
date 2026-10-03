@@ -1,18 +1,22 @@
 # keyball39 の VIA対応ファームウェアをビルドする workflow
 #
 # 実行方法:
-#   - 自動: keyball39 関連のコード (keyball39/, lib/, drivers/) を push したとき
+#   - 自動: keyball39 関連のコード (keyball39/, lib/, drivers/) を push したとき、
+#           またはそれを変える PR を出したとき (PR に push したときも)
 #   - 手動: Actions タブ → "Build Keyball39 VIA firmware" → "Run workflow"
 #     (手動実行はこのファイルがデフォルトブランチにある場合のみ表示されます)
 #
 # ビルド結果: workflow 実行ページ下部の Artifacts から
 #             keyball39-via-firmware (zip) をダウンロードして .hex を書き込む
 #
-# custom ブランチのビルド結果は、固定タグ firmware-latest のプレリリースにも置く
-# (publish ジョブ)。次の URL から認証なしで取得でき、Artifacts と違って期限切れにならない:
-#   https://github.com/<owner>/<repo>/releases/download/firmware-latest/keyball_keyball39_via.hex
-#   https://github.com/<owner>/<repo>/releases/download/firmware-latest/BUILD_INFO.txt
-# zmk-config-keyboards の tools/flash-keyball.cmd はここから最新版を取得して書き込む。
+# ビルド結果は、次のタグのプレリリースにも置く (.github/scripts/firmware-release.sh)。
+# 認証なしで取得でき、Artifacts と違って期限切れにならない:
+#   firmware-latest         custom ブランチの最新ビルド (push のたびに置き換える)
+#   firmware-custom-<sha7>  custom ブランチのビルドの履歴 (新しいものから 30 件を残す)
+#   firmware-pr-<番号>      PR のビルド (PR に push するたびに置き換える。新しいものから 30 件を残す)
+#   https://github.com/<owner>/<repo>/releases/download/<タグ>/keyball_keyball39_via.hex
+#   https://github.com/<owner>/<repo>/releases/download/<タグ>/BUILD_INFO.txt
+# zmk-config-keyboards の tools/flash.cmd (flash-keyball.cmd) は、ここから選んだビルドを書き込む。
 
 name: Build Keyball39 VIA firmware
 
@@ -27,10 +31,20 @@ on:
       - 'qmk_firmware/keyboards/keyball/lib/**'
       - 'qmk_firmware/keyboards/keyball/drivers/**'
       - '.github/**.yml'
+      - '.github/scripts/**'
     tags-ignore:
       - '**'
     branches:
       - '**'
+
+  # PR のビルドは firmware-pr-<番号> に置く (publish-pr ジョブ)
+  pull_request:
+    paths:
+      - 'qmk_firmware/keyboards/keyball/keyball39/**'
+      - 'qmk_firmware/keyboards/keyball/lib/**'
+      - 'qmk_firmware/keyboards/keyball/drivers/**'
+      - '.github/**.yml'
+      - '.github/scripts/**'
 
 jobs:
 
@@ -62,9 +76,9 @@ jobs:
           echo $f
         done
 
-  publish:
+  publish-latest:
     name: Publish firmware-latest
-    if: github.ref == 'refs/heads/custom'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/custom'
     runs-on: ubuntu-22.04
     needs:
     - build
@@ -76,73 +90,97 @@ jobs:
 
     steps:
 
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+
     - uses: actions/download-artifact@v6
       with:
         name: keyball39-via-firmware
+        path: firmware
 
-    - name: Write BUILD_INFO.txt
-      run: |
-        {
-          echo "repository: ${GITHUB_REPOSITORY}"
-          echo "branch: ${GITHUB_REF_NAME}"
-          echo "commit: ${GITHUB_SHA}"
-          echo "built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-        } > BUILD_INFO.txt
-        cat BUILD_INFO.txt
-        ls -l keyball_keyball39_via.hex
-
-    # リリースは作り直すが、タグ firmware-latest は削除せず、このビルドのコミットへ付け替える。
-    # GitHub はタグの削除を後から非同期に処理し、そのとき同じタグ名のリリースを下書きに戻す。
-    # 以前のようにタグも消して (--cleanup-tag) すぐ作り直すと、作ったばかりの新しいリリースまで
-    # 下書きにされ、ダウンロード URL が 404 になることがあった (zmk-config-LisM の build.yml と同じ)。
-    # プレリリースなので releases/latest や v* タグのリリース (release.yml) には影響しない。
-    - name: Replace firmware-latest release
+    - name: Publish firmware-latest
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-        TAG: firmware-latest
-      run: |
-        if gh api "repos/${GH_REPO}/git/ref/tags/${TAG}" --silent 2>/dev/null; then
-          gh api -X PATCH "repos/${GH_REPO}/git/refs/tags/${TAG}" -f sha="${GITHUB_SHA}" -F force=true --silent \
-            || echo "::warning::タグ ${TAG} を ${GITHUB_SHA::7} に付け替えられなかったため、前のコミットのままリリースを作ります (中身のコミットは BUILD_INFO.txt を参照)"
-        else
-          gh api -X POST "repos/${GH_REPO}/git/refs" -f ref="refs/tags/${TAG}" -f sha="${GITHUB_SHA}" --silent
-        fi
+        BRANCH: ${{ github.ref_name }}
+        HEAD_SHA: ${{ github.sha }}
+        DESCRIPTION: keyball39:via
+      run: bash .github/scripts/firmware-release.sh latest firmware/keyball_keyball39_via.hex
 
-        # 下書きに戻されたものも含めて、このタグのリリースをすべて消す (タグは消さない)
-        for id in $(gh api --paginate "repos/${GH_REPO}/releases?per_page=100" \
-                      --jq ".[] | select(.tag_name == \"${TAG}\") | .id"); do
-          gh api -X DELETE "repos/${GH_REPO}/releases/${id}" --silent
-        done
+  # 待機中のジョブは、同じグループの新しいジョブに取り消されるので、コミットごとにグループを分ける
+  # (続けて push しても、それぞれのビルドが履歴に残る)
+  publish-custom:
+    name: Publish firmware-custom
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/custom'
+    runs-on: ubuntu-22.04
+    needs:
+    - build
+    permissions:
+      contents: write
+    concurrency:
+      group: firmware-custom-${{ github.sha }}
+      cancel-in-progress: false
 
-        gh release create "${TAG}" \
-          --verify-tag \
-          --prerelease \
-          --title "Latest firmware (${GITHUB_REF_NAME} @ ${GITHUB_SHA::7})" \
-          --notes "custom ブランチの最新ビルド (keyball39:via)。push のたびに自動で置き換わります。詳細は BUILD_INFO.txt を参照。" \
-          keyball_keyball39_via.hex BUILD_INFO.txt
+    steps:
 
-    # 認証なしで今回のビルドを取得できるかを確かめる。下書きになっていたら公開し直し、
-    # それでも取得できなければジョブを失敗させる (書き込みスクリプトが 404 になる状態を見逃さない)。
-    - name: Verify firmware-latest is downloadable
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+
+    - uses: actions/download-artifact@v6
+      with:
+        name: keyball39-via-firmware
+        path: firmware
+
+    - name: Publish firmware-custom-<sha7>
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-        TAG: firmware-latest
-      run: |
-        url="${GITHUB_SERVER_URL}/${GH_REPO}/releases/download/${TAG}/BUILD_INFO.txt"
-        for i in 1 2 3 4 5 6; do
-          if curl -fsSL "${url}" | grep -qx "commit: ${GITHUB_SHA}"; then
-            echo "OK: ${url}"
-            exit 0
-          fi
-          for id in $(gh api --paginate "repos/${GH_REPO}/releases?per_page=100" \
-                        --jq ".[] | select(.tag_name == \"${TAG}\" and .draft) | .id"); do
-            echo "::warning::${TAG} リリース (${id}) が下書きになっているため公開し直します"
-            gh api -X PATCH "repos/${GH_REPO}/releases/${id}" -F draft=false --silent
-          done
-          sleep 10
-        done
-        echo "::error::${url} から今回のビルド (${GITHUB_SHA::7}) を取得できません"
-        exit 1
+        BRANCH: ${{ github.ref_name }}
+        HEAD_SHA: ${{ github.sha }}
+        KEEP: '30'
+        DESCRIPTION: keyball39:via
+      run: bash .github/scripts/firmware-release.sh custom firmware/keyball_keyball39_via.hex
+
+  # 同じリポジトリのブランチからの PR だけ (fork と Dependabot の PR は書き込み権限が無い)
+  publish-pr:
+    name: Publish firmware-pr
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-22.04
+    needs:
+    - build
+    permissions:
+      contents: write
+    concurrency:
+      group: firmware-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+
+    steps:
+
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+
+    - uses: actions/download-artifact@v6
+      with:
+        name: keyball39-via-firmware
+        path: firmware
+
+    - name: Publish firmware-pr-<number>
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        BRANCH: ${{ github.event.pull_request.head.ref }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        KEEP: '30'
+        DESCRIPTION: keyball39:via
+      run: bash .github/scripts/firmware-release.sh pr firmware/keyball_keyball39_via.hex
