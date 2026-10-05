@@ -91,6 +91,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KEYBALL_ACCEL_SPEED_THRESHOLD 1000
 #define KEYBALL_ACCEL_SPEED_MAX 4000
 
+// 楕円の補正 (keymap.c の keyball_on_apply_motion_to_mouse_move)。ボールを円を描くように回したときに、
+// カーソルが楕円ではなく円を描くよう、画面の X と Y に別々の倍率 (1000 = 等倍、500-2000) を掛ける
+// (傾きは補正しない)。加速より前に掛ける。値は zmk-config-keyboards の tools/keyboard-check.cmd
+// (メニュー 4「トラックボールの正規化」) で測って入れる。今の値に掛けて出すので、測り直したら置き換える。
+#define KEYBALL_SCALE_X 1000
+#define KEYBALL_SCALE_Y 1000
+
 // Bootmagic Lite: キーを押したまま USB を挿すと EEPROM を消してブートローダに入る。
 // VIA_ENABLE が BOOTMAGIC_ENABLE を自動で有効にするため、左手側は既定の (0, 0) =
 // Q で既に動く。右手側も同じ外側上段のキー P (R00 = row 4, col 0) で入れるようにする
