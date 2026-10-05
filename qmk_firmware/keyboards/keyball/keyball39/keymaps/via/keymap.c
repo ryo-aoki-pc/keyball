@@ -256,6 +256,8 @@ typedef struct {
     uint16_t speed;       // 速さの移動平均 (1 回の報告あたりの移動量の 16 倍)
     uint8_t  remainder_x; // 1 に満たない端数 (256 = 1)
     uint8_t  remainder_y;
+    uint8_t  scale_remainder_x; // 楕円の補正の端数
+    uint8_t  scale_remainder_y;
 } keyball_accel_t;
 
 static uint16_t keyball_accel_factor(uint16_t speed) {
@@ -268,11 +270,28 @@ static uint16_t keyball_accel_factor(uint16_t speed) {
     return 256 + (uint16_t)(KEYBALL_ACCEL_MAX - 256) * (speed - KEYBALL_ACCEL_THRESHOLD) / (KEYBALL_ACCEL_SPEED - KEYBALL_ACCEL_THRESHOLD);
 }
 
-static int8_t keyball_accel_apply(int16_t v, uint16_t factor, uint8_t *remainder) {
+// 楕円の補正 (config.h の KEYBALL_SCALE_X / _Y、1000 = 等倍)。256 = 等倍に直す
+#ifndef KEYBALL_SCALE_X
+#    define KEYBALL_SCALE_X 1000
+#endif
+#ifndef KEYBALL_SCALE_Y
+#    define KEYBALL_SCALE_Y 1000
+#endif
+#define KEYBALL_SCALE_X_Q8 ((uint16_t)((KEYBALL_SCALE_X * 256L + 500) / 1000))
+#define KEYBALL_SCALE_Y_Q8 ((uint16_t)((KEYBALL_SCALE_Y * 256L + 500) / 1000))
+
+_Static_assert(500 <= KEYBALL_SCALE_X && KEYBALL_SCALE_X <= 2000 && 500 <= KEYBALL_SCALE_Y && KEYBALL_SCALE_Y <= 2000, "KEYBALL_SCALE_X / _Y must be 500-2000");
+
+// v に factor / 256 を掛ける。端数は切り捨て、下位 8 ビットを次へ持ち越す
+static int16_t keyball_mul_q8(int16_t v, uint16_t factor, uint8_t *remainder) {
     int32_t total = (int32_t)v * factor + *remainder;
-    int32_t out   = total >> 8; // 端数は切り捨て、下位 8 ビットを次へ持ち越す
+    int32_t out   = total >> 8;
     *remainder    = (uint8_t)total;
-    return out < -127 ? -127 : out > 127 ? 127 : (int8_t)out;
+    return out < -32767 ? -32767 : out > 32767 ? 32767 : (int16_t)out;
+}
+
+static int8_t clip127(int16_t v) {
+    return v < -127 ? -127 : v > 127 ? 127 : (int8_t)v;
 }
 
 void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *r, bool is_left) {
@@ -289,6 +308,11 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
     m->x = 0;
     m->y = 0;
 
+    // 楕円の補正 (画面の X / Y に別々の倍率)。加速は補正後の値で速さを測る (ZMK の zip_x_scaler /
+    // zip_y_scaler を trackball_accel より前に置くのと同じ)
+    x = keyball_mul_q8(x, KEYBALL_SCALE_X_Q8, &a->scale_remainder_x);
+    y = keyball_mul_q8(y, KEYBALL_SCALE_Y_Q8, &a->scale_remainder_y);
+
     // 移動量 √(x² + y²) を「大きいほう + 小さいほうの半分」で近似する (誤差 12% 以内)
     uint16_t ax       = x < 0 ? -x : x;
     uint16_t ay       = y < 0 ? -y : y;
@@ -299,8 +323,8 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
     a->speed = (a->speed + distance * 16) / 2;
 
     uint16_t factor = keyball_accel_factor(a->speed);
-    r->x            = keyball_accel_apply(x, factor, &a->remainder_x);
-    r->y            = keyball_accel_apply(y, factor, &a->remainder_y);
+    r->x            = clip127(keyball_mul_q8(x, factor, &a->remainder_x));
+    r->y            = clip127(keyball_mul_q8(y, factor, &a->remainder_y));
 }
 
 #ifdef VIA_ENABLE
@@ -322,6 +346,7 @@ void keyball_on_apply_motion_to_mouse_move(keyball_motion_t *m, report_mouse_t *
 //   08 00 02: ファームのビルド日時 (QMK_BUILDDATE、ASCII)
 //   08 00 03: カーソルの加速。[3-4] KEYBALL_ACCEL_MIN_FACTOR  [5-6] MAX_FACTOR  [7-8] SPEED_THRESHOLD
 //             [9-10] SPEED_MAX  [11] KEYBALL_REPORTMOUSE_INTERVAL (ms)
+//             [12-13] KEYBALL_SCALE_X  [14-15] KEYBALL_SCALE_Y (楕円の補正。これより前のファームは 0)
 // 設定を変えるコマンド (08 以外、チャンネル 0 の 07 / 09) は受け付けず、id_unhandled を返す。
 // QMK の via.c の注意どおり、raw_hid_send() は呼ばない (応答は via.c が送る)。
 
@@ -386,13 +411,15 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
             strncpy((char *)v, QMK_BUILDDATE, length - 4);
             break;
         case 0x03:
-            // カーソルの加速 (config.h の KEYBALL_ACCEL_*)
+            // カーソルの加速 (config.h の KEYBALL_ACCEL_*) と楕円の補正 (KEYBALL_SCALE_*)
             memset(v, 0, length - 3);
             put_be16(&v[0], KEYBALL_ACCEL_MIN_FACTOR);
             put_be16(&v[2], KEYBALL_ACCEL_MAX_FACTOR);
             put_be16(&v[4], KEYBALL_ACCEL_SPEED_THRESHOLD);
             put_be16(&v[6], KEYBALL_ACCEL_SPEED_MAX);
             v[8] = KEYBALL_REPORTMOUSE_INTERVAL;
+            put_be16(&v[9], KEYBALL_SCALE_X);
+            put_be16(&v[11], KEYBALL_SCALE_Y);
             break;
         default:
             data[0] = id_unhandled;
